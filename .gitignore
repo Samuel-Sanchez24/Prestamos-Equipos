@@ -1,0 +1,64 @@
+# ===== .NET / Visual Studio =====
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Ll]og/
+[Ll]ogs/
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.rsuser
+*.cache
+*.pdb
+*.dbmdl
+*.jfm
+project.lock.json
+project.fragment.lock.json
+artifacts/
+publish/
+*.nupkg
+packages/
+!**/packages/build/
+TestResult*/
+[Tt]est[Rr]esult*/
+*.trx
+coverage*.json
+coverage*.xml
+
+# ===== IDEs =====
+.idea/
+*.sw?
+.vscode/*
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# ===== Node (si el frontend usa npm) =====
+node_modules/
+dist/
+
+# ===== Secretos y configuración local =====
+.env
+.env.*
+!.env.example
+appsettings.Development.json
+appsettings.Local.json
+*.pfx
+secrets.json
+
+# ===== Bases de datos locales =====
+*.mdf
+*.ldf
+*.ndf
+*.db
+*.sqlite
+
+# ===== Sistema operativo =====
+.DS_Store
+Thumbs.db
+desktop.ini
