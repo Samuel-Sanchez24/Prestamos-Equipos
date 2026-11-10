@@ -83,8 +83,7 @@
 - Los solicitantes se autorregistran; el personal lo crea un **administrador**.
 
 ### Pendientes (confirmar al aprobar los requisitos)
-- Duración de un semestre en días (S-03).
-- Quién aprueba la prórroga (S-10).
+- Ninguno. Los aspectos no definidos los resolvio el equipo.
 
-### Supuestos del equipo (no confirmados)
+### Decisiones del equipo
 - Ver sección 13 de [`requisitos.md`](requisitos.md).

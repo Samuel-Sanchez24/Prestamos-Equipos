@@ -5,8 +5,8 @@
 | Proyecto | Proyecto Final 03 (PF-03) |
 | Asignatura | Aplicaciones y Servicios Web — ITM |
 | Estudiantes | Samuel Andrés Sánchez Orrego · Dani Moreno Ciro |
-| Versión | 0.2 (incorpora resultados de la entrevista) |
-| Estado | Pendiente de aprobación del docente |
+| Versión | 1.0 |
+| Estado | Aprobado por el equipo |
 
 ---
 
@@ -108,8 +108,8 @@ Entrevista semiestructurada con el docente en el rol de representante de la inst
 | Aprobar o rechazar solicitudes y prórrogas | — | **X** | — | — |
 | Registrar entrega, no recogida y devolución | — | **X** | — | — |
 | Consultar su propio historial | **X** | — | — | — |
-| Consultar el historial de todos | — | **X** | **X** | **X** |
-| Consultar información consolidada | — | **X** | **X** | **X** |
+| Consultar el historial de todos | — | **X** | **X** |  — |
+| Consultar información consolidada | — | **X** | **X** |  — |
 
 ## 8. Reglas de negocio
 
@@ -274,26 +274,21 @@ Rechazada    No recogida
 | **Should** (importante) | RF-14, RF-15, RF-19 | Acordadas con el docente, pero no son condición de aceptación. |
 | **Could** (deseable) | Filtros adicionales y gráficos en la consulta consolidada | Solo si sobra tiempo. |
 
-## 13. Supuestos del equipo
+## 13. Decisiones del equipo
 
-| ID   | Supuesto | Motivo | Confirmar |
-|---|---|---|:-:|
-| S-01 | El solicitante elige recursos específicos del catálogo (no una categoría genérica). | P02: el docente lo dejó como decisión de software. Simplifica el cálculo de disponibilidad. | — |
-| S-02 | Datos de la solicitud: recursos, fecha de inicio, fecha de fin y motivo. | P06. | — |
-| S-03 | Un semestre equivale a 180 días (estudiantes: 180; docentes: 360). El valor es configurable. | P07 no define la duración en días. | **x** |
+| ID   | Decision | Motivo | 
+|---|---|---|
+| S-01 | El solicitante elige recursos específicos del catálogo (no una categoría genérica). | P02: el docente lo dejó como decisión de software. Simplifica el cálculo de disponibilidad.
+| S-02 | Datos de la solicitud: recursos, fecha de inicio, fecha de fin y motivo. | P06. 
+| S-03 | Un semestre equivale a 180 días (estudiantes: 180; docentes: 360). El valor es configurable. | P07 no define la duración en días.
 | S-04 | El técnico aprueba y también entrega. | P10. | — |
-| S-05 | La aprobación y la entrega se hacen por la solicitud completa; la devolución, por cada recurso. | Permite registrar el daño de un recurso puntual. | **x** |
-| S-06 | El solicitante indica si es estudiante o docente al registrarse; el administrador puede corregirlo. | P19 no especifica cómo se verifica el tipo. | **x** |
-| S-07 | Coordinación solo consulta; no aprueba ni gestiona. | La pregunta sobre sus permisos no se hizo. | — |
-| S-08 | El administrador gestiona el catálogo de recursos. | No se preguntó quién registra los recursos. | — |
-| S-09 | Si un recurso queda dañado y tiene reservas futuras, el técnico debe rechazarlas o cancelarlas; el sistema las señala. | P16 no cubre este caso. | — |
-| S-10 | La prórroga la aprueba el técnico. | P14 no indica quién la aprueba. | **x** |
-| S-11 | La entrega solo puede registrarse a partir de la fecha de inicio de la reserva. | Coherencia con la reserva anticipada (P04). | — |
-| S-12 | Un préstamo vencido no impide hacer nuevas solicitudes. | P08 (sin límite) y P14. | — |
+| S-05 | La aprobación y la entrega se hacen por la solicitud completa; la devolución, por cada recurso. | Permite registrar el daño de un recurso puntual.
+| S-06 | El solicitante indica si es estudiante o docente al registrarse; el administrador puede corregirlo. | P19 no especifica cómo se verifica el tipo. 
+| S-07 | Coordinación solo consulta; no aprueba ni gestiona. | La pregunta sobre sus permisos no se hizo. 
+| S-08 | El administrador gestiona el catálogo de recursos. | No se preguntó quién registra los recursos. 
+| S-09 | Si un recurso queda dañado y tiene reservas futuras, el técnico debe rechazarlas o cancelarlas; el sistema las señala. | P16 no cubre este caso. 
+| S-10 | La prórroga la aprueba el técnico. | P14 no indica quién la aprueba.
+| S-11 | La entrega solo puede registrarse a partir de la fecha de inicio de la reserva. | Coherencia con la reserva anticipada (P04). 
+| S-12 | Un préstamo vencido no impide hacer nuevas solicitudes. | P08 (sin límite) y P14. 
 
 
-## 14. Aprobación
-
-| Fecha | Versión | Aprobado por | Observaciones |
-|---|---|---|---|
-| | 0.2 | | |
