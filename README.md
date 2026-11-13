@@ -13,7 +13,7 @@ Proyecto Final 03 · Aplicaciones y Servicios Web · ITM
 
 | Integrante | Contribución |
 |---|---|
-| Sebastián López Sánchez | Por completar |
+| Samuel Andrés Sánchez Orrego| Por completar |
 
 ## 2. Descripción del sistema
 Aplicación web para gestionar el préstamo temporal de equipos y recursos de una institución educativa: consulta de disponibilidad, solicitud, evaluación, asignación, entrega, seguimiento y devolución.
@@ -28,7 +28,7 @@ Por completar.
 ## 4. Arquitectura, diseño de API y modelo de datos
 - Backend: ASP.NET Core Web API (C#) con Arquitectura Limpia
 - Persistencia: SQL Server + Entity Framework Core
-- Frontend: Por definir
+- Frontend: Blazor WebAssembly 
 
 Diseño detallado: [`docs/diseno.md`](docs/diseno.md)
 
