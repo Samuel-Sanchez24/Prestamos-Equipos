@@ -1,0 +1,123 @@
+﻿@page "/registro"
+@using System.ComponentModel.DataAnnotations
+@inject SesionServicio Sesion
+@inject NavigationManager Nav
+
+<PageTitle>Crear cuenta</PageTitle>
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <h1 class="h3 mb-3">Crear cuenta de solicitante</h1>
+
+        <EditForm Model="modelo" OnValidSubmit="Registrar">
+            <DataAnnotationsValidator />
+
+            <div class="mb-3">
+                <label class="form-label" for="nombre">Nombre completo</label>
+                <InputText id="nombre" class="form-control" @bind-Value="modelo.Nombre" />
+                <ValidationMessage For="() => modelo.Nombre" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label" for="documento">Documento</label>
+                <InputText id="documento" class="form-control" @bind-Value="modelo.Documento" />
+                <ValidationMessage For="() => modelo.Documento" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label" for="correo">Correo</label>
+                <InputText id="correo" class="form-control" autocomplete="username" @bind-Value="modelo.Correo" />
+                <ValidationMessage For="() => modelo.Correo" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label" for="tipo">Soy</label>
+                <InputSelect id="tipo" class="form-select" @bind-Value="modelo.TipoSolicitante">
+                    <option value="">Selecciona...</option>
+                    <option value="Estudiante">Estudiante</option>
+                    <option value="Docente">Docente</option>
+                </InputSelect>
+                <ValidationMessage For="() => modelo.TipoSolicitante" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label" for="contrasena">Contraseña</label>
+                <InputText id="contrasena" type="password" class="form-control" autocomplete="new-password" @bind-Value="modelo.Contrasena" />
+                <ValidationMessage For="() => modelo.Contrasena" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label" for="confirmar">Confirmar contraseña</label>
+                <InputText id="confirmar" type="password" class="form-control" autocomplete="new-password" @bind-Value="modelo.Confirmar" />
+                <ValidationMessage For="() => modelo.Confirmar" />
+            </div>
+
+            <AlertaError Mensaje="@error" Errores="@erroresCampo" />
+
+            <button class="btn btn-primary" type="submit" disabled="@cargando">
+                @(cargando ? "Creando cuenta..." : "Crear cuenta")
+            </button>
+            <a class="btn btn-link" href="login">Ya tengo cuenta</a>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    class RegistroFormulario
+    {
+        [Required(ErrorMessage = "El nombre es obligatorio.")]
+        public string Nombre { get; set; } = "";
+
+        [Required(ErrorMessage = "El documento es obligatorio.")]
+        public string Documento { get; set; } = "";
+
+        [Required(ErrorMessage = "El correo es obligatorio.")]
+        [EmailAddress(ErrorMessage = "Escribe un correo válido.")]
+        public string Correo { get; set; } = "";
+
+        [Required(ErrorMessage = "Indica si eres estudiante o docente.")]
+        public string TipoSolicitante { get; set; } = "";
+
+        [Required(ErrorMessage = "La contraseña es obligatoria.")]
+        [MinLength(6, ErrorMessage = "La contraseña debe tener al menos 6 caracteres.")]
+        public string Contrasena { get; set; } = "";
+
+        [Compare(nameof(Contrasena), ErrorMessage = "Las contraseñas no coinciden.")]
+        public string Confirmar { get; set; } = "";
+    }
+
+    RegistroFormulario modelo = new();
+    string? error;
+    Dictionary<string, string[]>? erroresCampo;
+    bool cargando;
+
+    protected override void OnInitialized()
+    {
+        if (Sesion.EstaAutenticado)
+            Nav.NavigateTo("/");
+    }
+
+    async Task Registrar()
+    {
+        error = null;
+        erroresCampo = null;
+        cargando = true;
+
+        var datos = new RegistroSolicitud
+        {
+            Nombre = modelo.Nombre.Trim(),
+            Documento = modelo.Documento.Trim(),
+            Correo = modelo.Correo.Trim(),
+            TipoSolicitante = modelo.TipoSolicitante,
+            Contrasena = modelo.Contrasena
+        };
+
+        var respuesta = await Sesion.RegistrarAsync(datos);
+        cargando = false;
+
+        if (respuesta.Ok)
+        {
+            Nav.NavigateTo("login?registrado=true");
+        }
+        else
+        {
+            error = respuesta.Error;
+            erroresCampo = respuesta.ErroresPorCampo;
+        }
+    }
+}       

@@ -1,0 +1,26 @@
+﻿@if (!string.IsNullOrEmpty(Mensaje) || (Errores != null && Errores.Count > 0))
+{
+    <div class="alert alert-danger" role="alert">
+        @if (!string.IsNullOrEmpty(Mensaje))
+        {
+            <div>@Mensaje</div>
+        }
+        @if (Errores != null && Errores.Count > 0)
+        {
+            <ul class="mb-0 mt-1">
+                @foreach (var campo in Errores)
+                {
+                    @foreach (var mensaje in campo.Value)
+                    {
+                        <li>@mensaje</li>
+                    }
+                }
+            </ul>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public string? Mensaje { get; set; }
+    [Parameter] public Dictionary<string, string[]>? Errores { get; set; }
+}

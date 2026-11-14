@@ -31,6 +31,8 @@ public class ApiCliente
 
     // Token JWT del usuario. Se asigna al iniciar sesión (Fase 1).
     public string? Token { get; set; }
+    // Se dispara cuando la API responde 401 con una sesión abierta (token vencido o inválido).
+    public event Action? OnNoAutorizado;
 
     public ApiCliente(HttpClient http)
     {
@@ -56,6 +58,8 @@ public class ApiCliente
 
             var respuesta = await http.SendAsync(solicitud);
             var texto = await respuesta.Content.ReadAsStringAsync();
+            if (respuesta.StatusCode == HttpStatusCode.Unauthorized && !string.IsNullOrEmpty(Token))
+                OnNoAutorizado?.Invoke();
 
             if (respuesta.IsSuccessStatusCode)
             {

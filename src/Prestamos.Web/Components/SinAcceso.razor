@@ -1,0 +1,28 @@
+﻿@inject NavigationManager Nav
+
+@if (estaAutenticado)
+{
+    <div class="alert alert-warning" role="alert">
+        No tienes permiso para ver esta página.
+    </div>
+    <a class="btn btn-primary" href="">Ir al inicio</a>
+}
+else
+{
+    <p>Redirigiendo al inicio de sesión...</p>
+}
+
+@code {
+    [CascadingParameter] Task<AuthenticationState>? EstadoAutenticacion { get; set; }
+
+    bool estaAutenticado;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var estado = await EstadoAutenticacion!;
+        estaAutenticado = estado.User.Identity?.IsAuthenticated == true;
+
+        if (!estaAutenticado)
+            Nav.NavigateTo("login");
+    }
+}   

@@ -1,0 +1,110 @@
+﻿@page "/login"
+@using System.ComponentModel.DataAnnotations
+@inject SesionServicio Sesion
+@inject NavigationManager Nav
+@inject IConfiguration Config
+
+<PageTitle>Iniciar sesión</PageTitle>
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-5">
+        <h1 class="h3 mb-3">Iniciar sesión</h1>
+
+        @if (Expirada == true)
+        {
+            <div class="alert alert-warning">Tu sesión expiró. Inicia sesión de nuevo.</div>
+        }
+        @if (Registrado == true)
+        {
+            <div class="alert alert-success">Cuenta creada. Ahora puedes iniciar sesión.</div>
+        }
+
+        <EditForm Model="modelo" OnValidSubmit="Ingresar">
+            <DataAnnotationsValidator />
+
+            <div class="mb-3">
+                <label class="form-label" for="correo">Correo</label>
+                <InputText id="correo" class="form-control" autocomplete="username" @bind-Value="modelo.Correo" />
+                <ValidationMessage For="() => modelo.Correo" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label" for="contrasena">Contraseña</label>
+                <InputText id="contrasena" type="password" class="form-control" autocomplete="current-password" @bind-Value="modelo.Contrasena" />
+                <ValidationMessage For="() => modelo.Contrasena" />
+            </div>
+
+            <AlertaError Mensaje="@error" Errores="@erroresCampo" />
+
+            <button class="btn btn-primary" type="submit" disabled="@cargando">
+                @(cargando ? "Ingresando..." : "Ingresar")
+            </button>
+            <a class="btn btn-link" href="registro">Crear cuenta</a>
+        </EditForm>
+
+        @if (modoDemo)
+        {
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h6 class="card-title">Modo demostración (temporal)</h6>
+                    <p class="card-text small mb-0">
+                        Contraseña de todas: <strong>Clave#2026</strong><br />
+                        ana.perez@correo.itm.edu.co (estudiante)<br />
+                        juan.gomez@correo.itm.edu.co (docente)<br />
+                        carlos.ruiz@correo.itm.edu.co (técnico)<br />
+                        laura.mejia@correo.itm.edu.co (coordinación)<br />
+                        admin@correo.itm.edu.co (administrador)
+                    </p>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    class LoginFormulario
+    {
+        [Required(ErrorMessage = "El correo es obligatorio.")]
+        [EmailAddress(ErrorMessage = "Escribe un correo válido.")]
+        public string Correo { get; set; } = "";
+
+        [Required(ErrorMessage = "La contraseña es obligatoria.")]
+        public string Contrasena { get; set; } = "";
+    }
+
+    [SupplyParameterFromQuery] public bool? Expirada { get; set; }
+    [SupplyParameterFromQuery] public bool? Registrado { get; set; }
+
+    LoginFormulario modelo = new();
+    string? error;
+    Dictionary<string, string[]>? erroresCampo;
+    bool cargando;
+    bool modoDemo;
+
+    protected override void OnInitialized()
+    {
+        modoDemo = string.Equals(Config["ModoDemo"], "true", StringComparison.OrdinalIgnoreCase);
+
+        if (Sesion.EstaAutenticado)
+            Nav.NavigateTo("/");
+    }
+
+    async Task Ingresar()
+    {
+        error = null;
+        erroresCampo = null;
+        cargando = true;
+
+        var respuesta = await Sesion.IniciarSesionAsync(modelo.Correo, modelo.Contrasena);
+        cargando = false;
+
+        if (respuesta.Ok)
+        {
+            Nav.NavigateTo("/");
+        }
+        else
+        {
+            error = respuesta.Error;
+            erroresCampo = respuesta.ErroresPorCampo;
+        }
+    }
+}   

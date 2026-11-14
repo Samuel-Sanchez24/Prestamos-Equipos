@@ -1,0 +1,27 @@
+﻿@page "/mi-cuenta"
+@attribute [Authorize]
+@inject SesionServicio Sesion
+
+<PageTitle>Mi cuenta</PageTitle>
+
+<h1>Mi cuenta</h1>
+
+@if (Sesion.Usuario != null)
+{
+    <dl class="row">
+        <dt class="col-sm-3">Nombre</dt>
+        <dd class="col-sm-9">@Sesion.Usuario.Nombre</dd>
+
+        <dt class="col-sm-3">Correo</dt>
+        <dd class="col-sm-9">@Sesion.Usuario.Correo</dd>
+
+        <dt class="col-sm-3">Rol</dt>
+        <dd class="col-sm-9">@RolUsuario.Etiqueta(Sesion.Usuario.Rol)</dd>
+
+        @if (!string.IsNullOrEmpty(Sesion.Usuario.TipoSolicitante))
+        {
+            <dt class="col-sm-3">Tipo</dt>
+            <dd class="col-sm-9">@Sesion.Usuario.TipoSolicitante</dd>
+        }
+    </dl>
+}   

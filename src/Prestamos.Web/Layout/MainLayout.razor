@@ -1,4 +1,7 @@
 ﻿@inherits LayoutComponentBase
+@inject SesionServicio Sesion
+@inject NavigationManager Nav
+
 <div class="page">
     <div class="sidebar">
         <NavMenu />
@@ -6,7 +9,16 @@
 
     <main>
         <div class="top-row px-4">
-            <span>Sistema de préstamos de equipos y recursos</span>
+            <AuthorizeView>
+                <Authorized>
+                    <span class="me-3">@Sesion.Usuario?.Nombre · @RolUsuario.Etiqueta(Sesion.Usuario?.Rol)</span>
+                    <button class="btn btn-sm btn-outline-secondary" @onclick="Salir">Cerrar sesión</button>
+                </Authorized>
+                <NotAuthorized>
+                    <a href="login">Ingresar</a>
+                    <a href="registro">Registrarse</a>
+                </NotAuthorized>
+            </AuthorizeView>
         </div>
 
         <article class="content px-4">
@@ -14,3 +26,11 @@
         </article>
     </main>
 </div>
+
+@code {
+    async Task Salir()
+    {
+        await Sesion.CerrarSesionAsync();
+        Nav.NavigateTo("login");
+    }
+}

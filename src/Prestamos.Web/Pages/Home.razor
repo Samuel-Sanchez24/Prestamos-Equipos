@@ -1,7 +1,16 @@
 ﻿@page "/"
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Inicio</PageTitle>
 
-<h1>Hello, world!</h1>
+<h1>Sistema de préstamos de equipos y recursos</h1>
 
-Welcome to your new app.
+<AuthorizeView>
+    <Authorized>
+        <p class="lead">Hola, <strong>@context.User.Identity?.Name</strong>. Desde el menú lateral puedes acceder a las opciones de tu rol.</p>
+    </Authorized>
+    <NotAuthorized>
+        <p class="lead">Consulta la disponibilidad de equipos, solicita préstamos y haz seguimiento hasta la devolución.</p>
+        <a class="btn btn-primary me-2" href="login">Iniciar sesión</a>
+        <a class="btn btn-outline-primary" href="registro">Crear cuenta</a>
+    </NotAuthorized>
+</AuthorizeView>
