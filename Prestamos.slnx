@@ -1,0 +1,17 @@
+<Solution>
+  <Folder Name="/Core/">
+    <Project Path="src/Prestamos.Domain/Prestamos.Domain.csproj" Id="09c40163-6cd0-4c7a-91dc-25f2d9744100" />
+    <Project Path="src/Prestamos.Application/Prestamos.Application.csproj" Id="6e6aec36-7595-4629-a1d8-964bd5bd208b" />
+    <Project Path="src/Prestamos.Contracts/Prestamos.Contracts.csproj" Id="3a3d2a6c-a16f-4054-9fb6-29e61c61f8ca" />
+  </Folder>
+  <Folder Name="/Infrastructure/">
+    <Project Path="src/Prestamos.Persistence/Prestamos.Persistence.csproj" Id="5232962a-ca9e-484c-9e7c-4724b3cd88d4" />
+  </Folder>
+  <Folder Name="/Presenters/">
+    <Project Path="src/Prestamos.Api/Prestamos.Api.csproj" Id="a575f689-60cb-454d-a5ac-7737b96b2ac1" />
+    <Project Path="src/Prestamos.Web/Prestamos.Web.csproj" Id="4c311715-9ebf-4eef-a8b1-095c15edeb78" />
+  </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="tests/Prestamos.Test/Prestamos.Test.csproj" Id="4b48008c-ea8e-42ea-9b9f-a5b4a9e9716d" />
+  </Folder>
+</Solution>
