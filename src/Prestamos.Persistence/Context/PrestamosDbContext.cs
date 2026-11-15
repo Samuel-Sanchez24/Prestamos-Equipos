@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Prestamos.Domain.Entities;
+using Prestamos.Persistence.Seed;
 
 namespace Prestamos.Persistence.Context;
 
@@ -18,5 +19,6 @@ public class PrestamosDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(PrestamosDbContext).Assembly);
+        modelBuilder.Sembrar();
     }
 }
