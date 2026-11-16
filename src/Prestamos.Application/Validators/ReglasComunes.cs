@@ -22,4 +22,8 @@ public static class ReglasComunes
          .MinimumLength(8).WithMessage("La contraseña debe tener al menos 8 caracteres.")
          .Matches("[A-Za-z]").WithMessage("La contraseña debe incluir al menos una letra.")
          .Matches("[0-9]").WithMessage("La contraseña debe incluir al menos un número.");
+
+    public static IRuleBuilderOptions<T, string> ValorDe<T, TEnum>(this IRuleBuilder<T, string> r) where TEnum : struct, Enum =>
+    r.Must(v => Enum.GetNames<TEnum>().Contains(v, StringComparer.OrdinalIgnoreCase))
+     .WithMessage($"Valor no válido. Opciones: {string.Join(", ", Enum.GetNames<TEnum>())}.");
 }
