@@ -5,9 +5,11 @@
 |---|---|
 | `main` | Versión estable, entregable. Solo recibe merges desde `develop`. |
 | `develop` | Integración del trabajo del equipo. |
-| `feature/<ca>-<descripcion>` | Funcionalidad. Ej.: `feature/ca02-registrar-solicitud` |
-| `docs/<tema>` | Documentación. Ej.: `docs/requisitos` |
+| `feature/<modulo>` | Funcionalidad. Ej.: `feature/solicitudes`, `feature/gestion-tecnico` |
+| `docs/<tema>` | Documentación. Ej.: `docs/requisitos`, `docs/cierre` |
 | `fix/<descripcion>` | Corrección de errores. |
+
+Los nombres de rama van sin tildes ni `ñ`.
 
 Nunca se hace commit directo a `main` ni a `develop`: todo entra por pull request.
 
@@ -18,7 +20,7 @@ Nunca se hace commit directo a `main` ni a `develop`: todo entra por pull reques
 Tipos: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`.
 
 Ejemplos:
-- `feat(solicitudes): registrar solicitud de préstamo (RF-03)`
+- `feat(solicitudes): registrar solicitud de préstamo (RF-07)`
 - `fix(prestamos): impedir asignación de recurso ya prestado`
 - `docs(requisitos): agregar registro de entrevista`
 
@@ -33,5 +35,5 @@ Evitar mensajes genéricos como `cambios`, `update` o `avance`.
 ## Responsables
 | Integrante | Usuario GitHub | Responsabilidad principal |
 |---|---|---|
-| Sebastián López Sánchez | @por-completar | Por definir |
-| Por completar | @por-completar | Por definir |
+| Samuel Andrés Sánchez Orrego | [@Samuel-Sanchez24](https://github.com/Samuel-Sanchez24) | Requisitos y diseño; backend completo: dominio, persistencia (EF Core + SQL Server), API REST, autenticación JWT, reglas de negocio y concurrencia; pruebas funcionales, evidencias y documentación. Ramas `docs/*` y `feature/*` del backend (PR #1 a #17). |
+| Dani Moreno Ciro | [@Dani-M0](https://github.com/Dani-M0)| Entrevista de levantamiento de requisitos; frontend en Blazor WebAssembly: cliente HTTP, layout y autenticación (ramas `feature/web-*`). |
