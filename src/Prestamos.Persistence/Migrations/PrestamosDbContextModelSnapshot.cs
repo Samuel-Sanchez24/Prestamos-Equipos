@@ -220,6 +220,351 @@ namespace Prestamos.Persistence.Migrations
                     b.HasIndex("Entidad", "EntidadId");
 
                     b.ToTable("Movimientos", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1001,
+                            Entidad = "Recurso",
+                            EntidadId = 1,
+                            EstadoNuevo = "Disponible",
+                            Fecha = new DateTime(2026, 11, 1, 8, 0, 0, 0, DateTimeKind.Unspecified),
+                            Observacion = "Recurso registrado",
+                            UsuarioId = 1
+                        },
+                        new
+                        {
+                            Id = 1002,
+                            Entidad = "Recurso",
+                            EntidadId = 2,
+                            EstadoNuevo = "Disponible",
+                            Fecha = new DateTime(2026, 11, 1, 8, 0, 0, 0, DateTimeKind.Unspecified),
+                            Observacion = "Recurso registrado",
+                            UsuarioId = 1
+                        },
+                        new
+                        {
+                            Id = 1003,
+                            Entidad = "Recurso",
+                            EntidadId = 3,
+                            EstadoNuevo = "Disponible",
+                            Fecha = new DateTime(2026, 11, 1, 8, 0, 0, 0, DateTimeKind.Unspecified),
+                            Observacion = "Recurso registrado",
+                            UsuarioId = 1
+                        },
+                        new
+                        {
+                            Id = 1004,
+                            Entidad = "Recurso",
+                            EntidadId = 4,
+                            EstadoNuevo = "Disponible",
+                            Fecha = new DateTime(2026, 11, 1, 8, 0, 0, 0, DateTimeKind.Unspecified),
+                            Observacion = "Recurso registrado",
+                            UsuarioId = 1
+                        },
+                        new
+                        {
+                            Id = 1005,
+                            Entidad = "Recurso",
+                            EntidadId = 5,
+                            EstadoNuevo = "Disponible",
+                            Fecha = new DateTime(2026, 11, 1, 8, 0, 0, 0, DateTimeKind.Unspecified),
+                            Observacion = "Recurso registrado",
+                            UsuarioId = 1
+                        },
+                        new
+                        {
+                            Id = 1006,
+                            Entidad = "Recurso",
+                            EntidadId = 6,
+                            EstadoNuevo = "Disponible",
+                            Fecha = new DateTime(2026, 11, 1, 8, 0, 0, 0, DateTimeKind.Unspecified),
+                            Observacion = "Recurso registrado",
+                            UsuarioId = 1
+                        },
+                        new
+                        {
+                            Id = 1007,
+                            Entidad = "Recurso",
+                            EntidadId = 7,
+                            EstadoNuevo = "Disponible",
+                            Fecha = new DateTime(2026, 11, 1, 8, 0, 0, 0, DateTimeKind.Unspecified),
+                            Observacion = "Recurso registrado",
+                            UsuarioId = 1
+                        },
+                        new
+                        {
+                            Id = 1008,
+                            Entidad = "Recurso",
+                            EntidadId = 8,
+                            EstadoNuevo = "Disponible",
+                            Fecha = new DateTime(2026, 11, 1, 8, 0, 0, 0, DateTimeKind.Unspecified),
+                            Observacion = "Recurso registrado",
+                            UsuarioId = 1
+                        },
+                        new
+                        {
+                            Id = 1009,
+                            Entidad = "Recurso",
+                            EntidadId = 9,
+                            EstadoNuevo = "Disponible",
+                            Fecha = new DateTime(2026, 11, 1, 8, 0, 0, 0, DateTimeKind.Unspecified),
+                            Observacion = "Recurso registrado",
+                            UsuarioId = 1
+                        },
+                        new
+                        {
+                            Id = 1010,
+                            Entidad = "Recurso",
+                            EntidadId = 10,
+                            EstadoNuevo = "Disponible",
+                            Fecha = new DateTime(2026, 11, 1, 8, 0, 0, 0, DateTimeKind.Unspecified),
+                            Observacion = "Recurso registrado",
+                            UsuarioId = 1
+                        },
+                        new
+                        {
+                            Id = 1011,
+                            Entidad = "Recurso",
+                            EntidadId = 11,
+                            EstadoNuevo = "Disponible",
+                            Fecha = new DateTime(2026, 11, 1, 8, 0, 0, 0, DateTimeKind.Unspecified),
+                            Observacion = "Recurso registrado",
+                            UsuarioId = 1
+                        },
+                        new
+                        {
+                            Id = 1012,
+                            Entidad = "Recurso",
+                            EntidadId = 12,
+                            EstadoNuevo = "Disponible",
+                            Fecha = new DateTime(2026, 11, 1, 8, 0, 0, 0, DateTimeKind.Unspecified),
+                            Observacion = "Recurso registrado",
+                            UsuarioId = 1
+                        },
+                        new
+                        {
+                            Id = 1013,
+                            Entidad = "Recurso",
+                            EntidadId = 5,
+                            EstadoAnterior = "Disponible",
+                            EstadoNuevo = "Danado",
+                            Fecha = new DateTime(2026, 11, 5, 10, 0, 0, 0, DateTimeKind.Unspecified),
+                            Observacion = "Lente con hongos",
+                            UsuarioId = 2
+                        },
+                        new
+                        {
+                            Id = 1014,
+                            Entidad = "Solicitud",
+                            EntidadId = 1,
+                            EstadoNuevo = "Pendiente",
+                            Fecha = new DateTime(2026, 11, 2, 10, 0, 0, 0, DateTimeKind.Unspecified),
+                            Observacion = "Solicitud registrada",
+                            UsuarioId = 4
+                        },
+                        new
+                        {
+                            Id = 1015,
+                            Entidad = "Solicitud",
+                            EntidadId = 1,
+                            EstadoAnterior = "Pendiente",
+                            EstadoNuevo = "Aprobada",
+                            Fecha = new DateTime(2026, 11, 2, 14, 0, 0, 0, DateTimeKind.Unspecified),
+                            Observacion = "Solicitud aprobada",
+                            UsuarioId = 2
+                        },
+                        new
+                        {
+                            Id = 1016,
+                            Entidad = "Solicitud",
+                            EntidadId = 1,
+                            EstadoAnterior = "Aprobada",
+                            EstadoNuevo = "Entregada",
+                            Fecha = new DateTime(2026, 11, 3, 9, 0, 0, 0, DateTimeKind.Unspecified),
+                            Observacion = "Recursos entregados",
+                            UsuarioId = 2
+                        },
+                        new
+                        {
+                            Id = 1017,
+                            Entidad = "Solicitud",
+                            EntidadId = 1,
+                            EstadoAnterior = "Entregada",
+                            EstadoNuevo = "Finalizada",
+                            Fecha = new DateTime(2026, 11, 6, 16, 0, 0, 0, DateTimeKind.Unspecified),
+                            Observacion = "Devuelto PT-001: Sin novedad",
+                            UsuarioId = 2
+                        },
+                        new
+                        {
+                            Id = 1018,
+                            Entidad = "Solicitud",
+                            EntidadId = 2,
+                            EstadoNuevo = "Pendiente",
+                            Fecha = new DateTime(2026, 11, 8, 11, 0, 0, 0, DateTimeKind.Unspecified),
+                            Observacion = "Solicitud registrada",
+                            UsuarioId = 4
+                        },
+                        new
+                        {
+                            Id = 1019,
+                            Entidad = "Solicitud",
+                            EntidadId = 2,
+                            EstadoAnterior = "Pendiente",
+                            EstadoNuevo = "Aprobada",
+                            Fecha = new DateTime(2026, 11, 9, 8, 30, 0, 0, DateTimeKind.Unspecified),
+                            Observacion = "Solicitud aprobada",
+                            UsuarioId = 2
+                        },
+                        new
+                        {
+                            Id = 1020,
+                            Entidad = "Solicitud",
+                            EntidadId = 2,
+                            EstadoAnterior = "Aprobada",
+                            EstadoNuevo = "Entregada",
+                            Fecha = new DateTime(2026, 11, 10, 8, 0, 0, 0, DateTimeKind.Unspecified),
+                            Observacion = "Recursos entregados",
+                            UsuarioId = 2
+                        },
+                        new
+                        {
+                            Id = 1021,
+                            Entidad = "Solicitud",
+                            EntidadId = 3,
+                            EstadoNuevo = "Pendiente",
+                            Fecha = new DateTime(2026, 11, 10, 9, 0, 0, 0, DateTimeKind.Unspecified),
+                            Observacion = "Solicitud registrada",
+                            UsuarioId = 5
+                        },
+                        new
+                        {
+                            Id = 1022,
+                            Entidad = "Solicitud",
+                            EntidadId = 3,
+                            EstadoAnterior = "Pendiente",
+                            EstadoNuevo = "Aprobada",
+                            Fecha = new DateTime(2026, 11, 10, 15, 0, 0, 0, DateTimeKind.Unspecified),
+                            Observacion = "Solicitud aprobada",
+                            UsuarioId = 2
+                        },
+                        new
+                        {
+                            Id = 1023,
+                            Entidad = "Solicitud",
+                            EntidadId = 3,
+                            EstadoAnterior = "Aprobada",
+                            EstadoNuevo = "Entregada",
+                            Fecha = new DateTime(2026, 11, 12, 7, 30, 0, 0, DateTimeKind.Unspecified),
+                            Observacion = "Recursos entregados",
+                            UsuarioId = 2
+                        },
+                        new
+                        {
+                            Id = 1024,
+                            Entidad = "Solicitud",
+                            EntidadId = 4,
+                            EstadoNuevo = "Pendiente",
+                            Fecha = new DateTime(2026, 11, 13, 10, 0, 0, 0, DateTimeKind.Unspecified),
+                            Observacion = "Solicitud registrada",
+                            UsuarioId = 4
+                        },
+                        new
+                        {
+                            Id = 1025,
+                            Entidad = "Solicitud",
+                            EntidadId = 4,
+                            EstadoAnterior = "Pendiente",
+                            EstadoNuevo = "Aprobada",
+                            Fecha = new DateTime(2026, 11, 14, 9, 0, 0, 0, DateTimeKind.Unspecified),
+                            Observacion = "Solicitud aprobada",
+                            UsuarioId = 2
+                        },
+                        new
+                        {
+                            Id = 1026,
+                            Entidad = "Solicitud",
+                            EntidadId = 5,
+                            EstadoNuevo = "Pendiente",
+                            Fecha = new DateTime(2026, 11, 15, 8, 0, 0, 0, DateTimeKind.Unspecified),
+                            Observacion = "Solicitud registrada",
+                            UsuarioId = 5
+                        },
+                        new
+                        {
+                            Id = 1027,
+                            Entidad = "Solicitud",
+                            EntidadId = 6,
+                            EstadoNuevo = "Pendiente",
+                            Fecha = new DateTime(2026, 11, 9, 16, 0, 0, 0, DateTimeKind.Unspecified),
+                            Observacion = "Solicitud registrada",
+                            UsuarioId = 4
+                        },
+                        new
+                        {
+                            Id = 1028,
+                            Entidad = "Solicitud",
+                            EntidadId = 6,
+                            EstadoAnterior = "Pendiente",
+                            EstadoNuevo = "Rechazada",
+                            Fecha = new DateTime(2026, 11, 10, 8, 0, 0, 0, DateTimeKind.Unspecified),
+                            Observacion = "El recurso CM-002 fue reportado como dañado.",
+                            UsuarioId = 2
+                        },
+                        new
+                        {
+                            Id = 1029,
+                            Entidad = "Solicitud",
+                            EntidadId = 7,
+                            EstadoNuevo = "Pendiente",
+                            Fecha = new DateTime(2026, 11, 11, 10, 0, 0, 0, DateTimeKind.Unspecified),
+                            Observacion = "Solicitud registrada",
+                            UsuarioId = 5
+                        },
+                        new
+                        {
+                            Id = 1030,
+                            Entidad = "Solicitud",
+                            EntidadId = 7,
+                            EstadoAnterior = "Pendiente",
+                            EstadoNuevo = "Cancelada",
+                            Fecha = new DateTime(2026, 11, 12, 9, 0, 0, 0, DateTimeKind.Unspecified),
+                            Observacion = "Cancelada por el solicitante",
+                            UsuarioId = 5
+                        },
+                        new
+                        {
+                            Id = 1031,
+                            Entidad = "Solicitud",
+                            EntidadId = 8,
+                            EstadoNuevo = "Pendiente",
+                            Fecha = new DateTime(2026, 11, 7, 12, 0, 0, 0, DateTimeKind.Unspecified),
+                            Observacion = "Solicitud registrada",
+                            UsuarioId = 4
+                        },
+                        new
+                        {
+                            Id = 1032,
+                            Entidad = "Solicitud",
+                            EntidadId = 8,
+                            EstadoAnterior = "Pendiente",
+                            EstadoNuevo = "Aprobada",
+                            Fecha = new DateTime(2026, 11, 8, 9, 0, 0, 0, DateTimeKind.Unspecified),
+                            Observacion = "Solicitud aprobada",
+                            UsuarioId = 2
+                        },
+                        new
+                        {
+                            Id = 1033,
+                            Entidad = "Solicitud",
+                            EntidadId = 8,
+                            EstadoAnterior = "Aprobada",
+                            EstadoNuevo = "NoRecogida",
+                            Fecha = new DateTime(2026, 11, 11, 17, 0, 0, 0, DateTimeKind.Unspecified),
+                            Observacion = "El solicitante no recogió los recursos",
+                            UsuarioId = 2
+                        });
                 });
 
             modelBuilder.Entity("Prestamos.Domain.Entities.Prorroga", b =>

@@ -33,5 +33,5 @@ Evitar mensajes genéricos como `cambios`, `update` o `avance`.
 ## Responsables
 | Integrante | Usuario GitHub | Responsabilidad principal |
 |---|---|---|
-| Sebastián López Sánchez | @por-completar | Por definir |
+| Samuel Andres Sanchez Orrego | @Samuel-Sanchez24 | Por definir |
 | Por completar | @por-completar | Por definir |

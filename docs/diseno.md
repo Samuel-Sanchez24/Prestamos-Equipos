@@ -31,29 +31,32 @@ Las dependencias apuntan hacia el centro: el dominio no conoce la base de datos 
 
 ```mermaid
 flowchart TB
-    API[Prestamos.WebApi<br/>Controladores · Middleware · Auth]
-    INF[Prestamos.Infrastructure<br/>EF Core · Repositorios · JWT · Hash]
+    API[Prestamos.Api<br/>Controladores · Middleware · JWT · Hash · Reloj]
+    PER[Prestamos.Persistence<br/>EF Core · Configuraciones · Migraciones · Repositorios · Semilla]
     APP[Prestamos.Application<br/>Casos de uso · Validaciones · Interfaces]
     DOM[Prestamos.Domain<br/>Entidades · Estados · Reglas]
     CON[Prestamos.Contracts<br/>DTOs de entrada y salida]
     WEB[Prestamos.Web<br/>Blazor WebAssembly]
 
     API --> APP
-    API --> INF
-    INF --> APP
+    API --> PER
+    PER --> APP
     APP --> DOM
     APP --> CON
     WEB --> CON
 ```
 
+En Visual Studio los proyectos se agrupan en carpetas de solución: **Core** (Domain, Application, Contracts), **Infrastructure** (Persistence), **Presenters** (Api, Web) y **Tests** (Test).
+
 | Proyecto | Contenido | Depende de |
 |---|---|---|
-| `Prestamos.Domain` | Entidades, enumeraciones de estado, reglas que cambian estados (Aprobar(), Entregar()…), excepciones de dominio. | Nada |
-| `Prestamos.Application` | Servicios de casos de uso, validaciones (FluentValidation), interfaces de repositorios, reloj, hash y token. | Domain, Contracts |
+| `Prestamos.Domain` | Entidades, enumeraciones de estado, reglas que cambian estados (`Aprobar()`, `Entregar()`…), excepción de regla de negocio. | Nada |
+| `Prestamos.Application` | Servicios de casos de uso, validaciones (FluentValidation), interfaces de repositorios, reloj, hash y token, opciones de duración. | Domain, Contracts |
 | `Prestamos.Contracts` | DTOs de solicitud y respuesta compartidos entre API y frontend. | Nada |
-| `Prestamos.Infrastructure` | `DbContext`, configuraciones de tablas, migraciones, repositorios, JWT y hash de contraseñas. | Application |
-| `Prestamos.WebApi` | Controladores, middleware de errores, configuración de autenticación, CORS y Swagger. | Application, Infrastructure |
+| `Prestamos.Persistence` | `DbContext`, configuraciones de tablas, migraciones, repositorios y datos semilla. | Application |
+| `Prestamos.Api` | Controladores, manejo global de errores, JWT, hash de contraseñas, reloj de Colombia, CORS y Swagger. | Application, Persistence |
 | `Prestamos.Web` | Páginas, componentes y cliente HTTP. | Contracts |
+| `Prestamos.Test` | Proyecto xUnit reservado para pruebas de reglas (no exigido por la guía). | Domain, Application |
 
 
 ### 1.3 Estructura del repositorio
@@ -64,12 +67,14 @@ flowchart TB
 │   ├── Prestamos.Domain/
 │   ├── Prestamos.Application/
 │   ├── Prestamos.Contracts/
-│   ├── Prestamos.Infrastructure/
-│   ├── Prestamos.WebApi/
+│   ├── Prestamos.Persistence/
+│   ├── Prestamos.Api/
 │   └── Prestamos.Web/
+├── tests/
+│   └── Prestamos.Test/
 ├── docs/
 ├── evidencias/
-├── Prestamos.sln
+├── Prestamos.slnx
 └── README.md
 ```
 
@@ -450,7 +455,7 @@ Validaciones: la solicitud debe estar `Entregada`; no puede haber otra prórroga
 | Transiciones de estado | Domain (métodos de la entidad) | `Solicitud.Entregar(hoy)` falla si el estado no es `Aprobada`. |
 | Reglas que consultan otros datos | Application (servicio de caso de uso) | Disponibilidad, duración máxima según tipo de solicitante. |
 | Integridad | Base de datos | Claves únicas, foráneas y `CHECK` de fechas. |
-| Permisos por rol | WebApi (`[Authorize(Roles = ...)]`) | Solo el técnico aprueba. |
+| Permisos por rol | Api (`[Authorize(Roles = ...)]`) | Solo el técnico aprueba. |
 | Permisos por propiedad | Application | Un solicitante no puede ver ni cancelar solicitudes ajenas (403). |
 
 El frontend repite algunas validaciones solo para dar una mejor experiencia; **la API nunca confía en ellas** (RNF-03).
@@ -589,7 +594,7 @@ El menú lateral muestra solo las pantallas del rol del usuario. Aun así, la AP
 |---|---|---|---|
 | **ASP.NET Core Web API sobre .NET 10 (LTS)** | Node/Express, Django | Versión con soporte extendido; tipado fuerte; autenticación, validación y documentación integradas; dominio del equipo en C#. | RT-01 |
 | **SQL Server + Entity Framework Core** | PostgreSQL, SQLite | Motor relacional con transacciones y bloqueos para la regla de concurrencia; LocalDB o Express gratuitos para ejecutar localmente; migraciones reproducibles. | RNF-04, RNF-07 |
-| **Arquitectura Limpia (4 capas + Contracts)** | MVC en un solo proyecto | Aísla las reglas de negocio, que son el núcleo del proyecto; facilita explicar y probar cada regla. Sin CQRS ni MediatR, para no agregar complejidad que el alcance no requiere. | RNF-08 |
+| **Arquitectura Limpia (Domain, Application, Persistence, Api + Contracts)** | MVC en un solo proyecto | Aísla las reglas de negocio, que son el núcleo del proyecto; facilita explicar y probar cada regla. Sin CQRS ni MediatR, para no agregar complejidad que el alcance no requiere. | RNF-08 |
 | **Blazor WebAssembly** | React, Angular, MVC con vistas | Mismo lenguaje en frontend y backend; DTOs compartidos; separación cliente-servidor real (el navegador consume la API por HTTP). | RT-01, RT-02 |
 | **JWT con roles** | Cookies de sesión | API sin estado, consumible por el frontend y por herramientas HTTP en las pruebas; roles en el token para `[Authorize]`. | RNF-01, RNF-02 |
 | **Hash de contraseñas con `PasswordHasher` de ASP.NET Core Identity** | BCrypt | Incluido en el framework; algoritmo con sal e iteraciones. | RNF-01 |
@@ -612,3 +617,16 @@ El menú lateral muestra solo las pantallas del rol del usuario. Aun así, la AP
 | CA-04 | RF-12, RN-02, RN-07 | `POST .../entregar` + control de concurrencia | Entregas |
 | CA-05 | RF-14, RF-15, RF-16, RF-17, RF-19 | `POST .../devoluciones`, `.../prorrogas`, `GET .../movimientos` | Préstamos activos, Prórrogas, Mis solicitudes |
 | CA-06 | RF-18, RF-19 | `GET /api/reportes/resumen`, `GET /api/reportes/prestamos` | Panel de coordinación |
+
+---
+
+## 9. Ajustes realizados durante la implementación
+
+| Ajuste | Motivo |
+|---|---|
+| Los proyectos `Infrastructure` y `WebApi` se llamaron `Prestamos.Persistence` y `Prestamos.Api`; JWT, hash y reloj quedaron en `Prestamos.Api`. | Organización por carpetas de solución Core / Infrastructure / Presenters / Tests acordada por el equipo. |
+| Se agregaron `GET /api/estado`, `GET /api/usuarios/{id}` y `GET /api/prorrogas/{id}`. | Verificar la conexión con la base de datos y devolver `Location` válido en las respuestas `201 Created`. |
+| `GET /api/reportes/prestamos` clasifica cada recurso prestado como `Activo`, `Vencido` o `Devuelto` e informa los días de retraso. | Responder a CA-06 con estados y responsables por recurso. |
+| Las excepciones de aplicación se nombraron en español (`DatosInvalidosException`, `NoEncontradoException`, `AccesoDenegadoException`, `NoAutenticadoException`). | Evitar conflicto con `ValidationException` de FluentValidation. |
+| Los catálogos de filtros (`estado`, `rol`) ignoran espacios sobrantes. | Robustez ante entradas desde la interfaz o herramientas HTTP. |
+| Los datos semilla incluyen el historial (movimientos) de las solicitudes de ejemplo. | Que las consultas de historial (RF-19) muestren datos desde el primer arranque. |
