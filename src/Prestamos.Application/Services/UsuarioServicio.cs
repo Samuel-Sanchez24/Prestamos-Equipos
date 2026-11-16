@@ -69,6 +69,13 @@ public class UsuarioServicio
         return usuarios.Select(u => u.ARespuesta()).ToList();
     }
 
+    public async Task<UsuarioResponse> ObtenerAsync(int id, CancellationToken ct = default)
+    {
+        var usuario = await _usuarios.ObtenerPorIdAsync(id, ct)
+            ?? throw new NoEncontradoException($"No existe el usuario con id {id}.");
+        return usuario.ARespuesta();
+    }
+
     public async Task<UsuarioResponse> ActualizarAsync(int id, ActualizarUsuarioRequest req, CancellationToken ct = default)
     {
         var usuario = await _usuarios.ObtenerPorIdAsync(id, ct)
