@@ -13,6 +13,9 @@ public static class DependencyInjection
         services.AddScoped<AuthServicio>();
         services.AddScoped<UsuarioServicio>();
 
+        services.AddScoped<CategoriaServicio>();
+        services.AddScoped<RecursoServicio>();
+
         return services;
     }
 }

@@ -12,4 +12,17 @@ public class Movimiento
     public string? Observacion { get; set; }
 
     public Usuario Usuario { get; set; } = null!;
+
+    public static Movimiento Registrar(string entidad, int entidadId, string? estadoAnterior,
+                                   string estadoNuevo, int usuarioId, DateTime fecha, string? observacion = null) =>
+    new()
+    {
+        Entidad = entidad,
+        EntidadId = entidadId,
+        EstadoAnterior = estadoAnterior,
+        EstadoNuevo = estadoNuevo,
+        UsuarioId = usuarioId,
+        Fecha = fecha,
+        Observacion = observacion
+    };
 }

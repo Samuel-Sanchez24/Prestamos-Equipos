@@ -16,6 +16,10 @@ public static class DependencyInjection
         services.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
         services.AddScoped<IUnidadDeTrabajo, UnidadDeTrabajo>();
 
+        services.AddScoped<ICategoriaRepositorio, CategoriaRepositorio>();
+        services.AddScoped<IRecursoRepositorio, RecursoRepositorio>();
+        services.AddScoped<IMovimientoRepositorio, MovimientoRepositorio>();
+
         return services;
     }
 }
