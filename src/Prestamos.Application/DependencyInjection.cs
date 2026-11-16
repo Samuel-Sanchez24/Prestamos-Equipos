@@ -22,6 +22,7 @@ public static class DependencyInjection
 
         services.AddScoped<ProrrogaServicio>();
 
+        services.AddScoped<ReporteServicio>();
         return services;
     }
 }
