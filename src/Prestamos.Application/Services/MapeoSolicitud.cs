@@ -31,6 +31,7 @@ public static class MapeoSolicitud
             RecibidoPor = d.RecibidoPor?.Nombre,
             DevueltoConDano = d.DevueltoConDano,
             ObservacionDevolucion = d.ObservacionDevolucion
-        }).ToList()
+        }).ToList(),
+        Prorrogas = s.Prorrogas.OrderBy(p => p.FechaSolicitud).Select(p => p.ARespuesta()).ToList()
     };
 }

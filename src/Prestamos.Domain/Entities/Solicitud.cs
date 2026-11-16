@@ -107,4 +107,34 @@ public class Solicitud
             throw new BusinessRuleException(
                 $"No se puede {accion} la solicitud {Id} porque está en estado {Estado}. Debe estar en {requerido}.");
     }
+
+    public Prorroga SolicitarProrroga(DateOnly nuevaFechaFin, string motivo, DateTime ahora)
+    {
+        ExigirEstado(EstadoSolicitud.Entregada, "solicitar prórroga de");
+        if (Prorrogas.Any(p => p.Estado == EstadoProrroga.Pendiente))
+            throw new BusinessRuleException($"La solicitud {Id} ya tiene una prórroga pendiente de evaluación.");
+        if (nuevaFechaFin <= FechaFin)
+            throw new BusinessRuleException(
+                $"La nueva fecha de fin debe ser posterior a la actual ({FechaFin:yyyy-MM-dd}).");
+
+        var prorroga = new Prorroga
+        {
+            FechaFinAnterior = FechaFin,
+            FechaFinSolicitada = nuevaFechaFin,
+            Motivo = motivo.Trim(),
+            Estado = EstadoProrroga.Pendiente,
+            FechaSolicitud = ahora
+        };
+        Prorrogas.Add(prorroga);
+        return prorroga;
+    }
+
+    public void AmpliarFechaFin(DateOnly nuevaFechaFin)
+    {
+        ExigirEstado(EstadoSolicitud.Entregada, "ampliar la fecha de fin de");
+        if (nuevaFechaFin <= FechaFin)
+            throw new BusinessRuleException(
+                $"La nueva fecha de fin debe ser posterior a la actual ({FechaFin:yyyy-MM-dd}).");
+        FechaFin = nuevaFechaFin;
+    }
 }
