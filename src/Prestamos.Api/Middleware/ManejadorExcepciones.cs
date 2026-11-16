@@ -19,6 +19,7 @@ public class ManejadorExcepciones : IExceptionHandler
         var (status, titulo) = exception switch
         {
             DatosInvalidosException => (StatusCodes.Status400BadRequest, "Datos inválidos"),
+            NoAutenticadoException => (StatusCodes.Status401Unauthorized, "No autenticado"),
             AccesoDenegadoException => (StatusCodes.Status403Forbidden, "Acceso denegado"),
             NoEncontradoException => (StatusCodes.Status404NotFound, "No encontrado"),
             BusinessRuleException => (StatusCodes.Status409Conflict, "Regla de negocio incumplida"),
