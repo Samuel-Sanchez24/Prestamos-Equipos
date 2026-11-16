@@ -9,8 +9,7 @@ public static class ApiExtensions
     public static IServiceCollection AddApiBase(this IServiceCollection services, IConfiguration config)
     {
         services.AddControllers();
-        services.AddOpenApi();
-
+        services.AddOpenApi(o => o.AddDocumentTransformer<EsquemaBearerOpenApi>());
         services.AddProblemDetails();
         services.AddExceptionHandler<ManejadorExcepciones>();
 
@@ -24,6 +23,7 @@ public static class ApiExtensions
     public static WebApplication UseApiBase(this WebApplication app)
     {
         app.UseExceptionHandler();
+        app.UseStatusCodePages();
 
         if (app.Environment.IsDevelopment())
         {
@@ -37,6 +37,7 @@ public static class ApiExtensions
 
         app.UseHttpsRedirection();
         app.UseCors(PoliticaCors);
+        app.UseAuthentication();
         app.UseAuthorization();
         app.MapControllers();
 
