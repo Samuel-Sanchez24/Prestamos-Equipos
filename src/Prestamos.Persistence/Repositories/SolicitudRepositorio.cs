@@ -45,5 +45,7 @@ public class SolicitudRepositorio : ISolicitudRepositorio
            .Include(s => s.EntregadaPor)
            .Include(s => s.Detalles).ThenInclude(d => d.Recurso)
            .Include(s => s.Detalles).ThenInclude(d => d.RecibidoPor)
+           .Include(s => s.Prorrogas).ThenInclude(p => p.EvaluadaPor)
            .AsSplitQuery();
+   
 }

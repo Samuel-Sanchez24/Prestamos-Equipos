@@ -1,4 +1,6 @@
-﻿namespace Prestamos.Contracts.Solicitudes;
+﻿using Prestamos.Contracts.Prorrogas;
+
+namespace Prestamos.Contracts.Solicitudes;
 
 public class SolicitudResponse
 {
@@ -20,4 +22,5 @@ public class SolicitudResponse
     public DateTime? FechaEntrega { get; set; }
 
     public List<DetalleRecursoResponse> Recursos { get; set; } = [];
+    public List<ProrrogaResponse> Prorrogas { get; set; } = [];
 }
