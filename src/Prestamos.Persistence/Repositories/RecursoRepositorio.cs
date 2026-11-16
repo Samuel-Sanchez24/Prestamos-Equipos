@@ -65,4 +65,14 @@ public class RecursoRepositorio : IRecursoRepositorio
            .Select(d => d.Solicitud)
            .OrderBy(s => s.FechaInicio)
            .ToListAsync(ct);
+
+    public Task<List<Recurso>> ObtenerPorIdsAsync(IReadOnlyCollection<int> ids, CancellationToken ct = default) =>
+    _db.Recursos.Where(r => ids.Contains(r.Id)).ToListAsync(ct);
+
+    public async Task BloquearAsync(IReadOnlyCollection<int> ids, CancellationToken ct = default)
+    {
+        var lista = string.Join(",", ids.Select(id => id.ToString()));
+        await _db.Database.ExecuteSqlRawAsync(
+            $"SELECT Id FROM Recursos WITH (UPDLOCK, HOLDLOCK) WHERE Id IN ({lista})", ct);
+    }
 }
