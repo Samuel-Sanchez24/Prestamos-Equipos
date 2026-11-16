@@ -40,4 +40,71 @@ public class Solicitud
                 $"La solicitud {Id} no se puede cancelar porque está en estado {Estado}. Solo se cancelan solicitudes pendientes o aprobadas.");
         Estado = EstadoSolicitud.Cancelada;
     }
+
+    public void Aprobar(int tecnicoId, DateTime ahora)
+    {
+        ExigirEstado(EstadoSolicitud.Pendiente, "aprobar");
+        Estado = EstadoSolicitud.Aprobada;
+        EvaluadaPorId = tecnicoId;
+        FechaEvaluacion = ahora;
+    }
+
+    public void Rechazar(int tecnicoId, DateTime ahora, string motivo)
+    {
+        ExigirEstado(EstadoSolicitud.Pendiente, "rechazar");
+        if (string.IsNullOrWhiteSpace(motivo))
+            throw new BusinessRuleException("El motivo del rechazo es obligatorio.");
+        Estado = EstadoSolicitud.Rechazada;
+        EvaluadaPorId = tecnicoId;
+        FechaEvaluacion = ahora;
+        MotivoRechazo = motivo.Trim();
+    }
+
+    public void Entregar(int tecnicoId, DateTime ahora, DateOnly hoy)
+    {
+        ExigirEstado(EstadoSolicitud.Aprobada, "entregar");
+        if (hoy < FechaInicio)
+            throw new BusinessRuleException(
+                $"La solicitud {Id} no puede entregarse antes de su fecha de inicio ({FechaInicio:yyyy-MM-dd}).");
+        if (hoy > FechaFin)
+            throw new BusinessRuleException(
+                $"El período de la solicitud {Id} terminó el {FechaFin:yyyy-MM-dd}. Márcala como no recogida.");
+        Estado = EstadoSolicitud.Entregada;
+        EntregadaPorId = tecnicoId;
+        FechaEntrega = ahora;
+    }
+
+    public void MarcarNoRecogida()
+    {
+        ExigirEstado(EstadoSolicitud.Aprobada, "marcar como no recogida");
+        Estado = EstadoSolicitud.NoRecogida;
+    }
+
+
+    public DetalleSolicitud RegistrarDevolucion(int recursoId, int tecnicoId, DateTime ahora, bool conDano, string? observacion)
+    {
+        ExigirEstado(EstadoSolicitud.Entregada, "registrar devoluciones en");
+
+        var detalle = Detalles.FirstOrDefault(d => d.RecursoId == recursoId)
+            ?? throw new BusinessRuleException($"El recurso {recursoId} no pertenece a la solicitud {Id}.");
+        if (detalle.FechaDevolucion is not null)
+            throw new BusinessRuleException($"El recurso {detalle.Recurso?.Codigo ?? recursoId.ToString()} ya fue devuelto.");
+
+        detalle.FechaDevolucion = ahora;
+        detalle.RecibidoPorId = tecnicoId;
+        detalle.DevueltoConDano = conDano;
+        detalle.ObservacionDevolucion = observacion?.Trim();
+
+        if (Detalles.All(d => d.FechaDevolucion is not null))
+            Estado = EstadoSolicitud.Finalizada;
+
+        return detalle;
+    }
+
+    private void ExigirEstado(EstadoSolicitud requerido, string accion)
+    {
+        if (Estado != requerido)
+            throw new BusinessRuleException(
+                $"No se puede {accion} la solicitud {Id} porque está en estado {Estado}. Debe estar en {requerido}.");
+    }
 }

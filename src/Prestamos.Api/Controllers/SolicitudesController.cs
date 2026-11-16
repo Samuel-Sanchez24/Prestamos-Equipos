@@ -13,10 +13,12 @@ namespace Prestamos.Api.Controllers;
 public class SolicitudesController : ControllerBase
 {
     private readonly SolicitudServicio _solicitudes;
+    private readonly GestionSolicitudServicio _gestion;
 
-    public SolicitudesController(SolicitudServicio solicitudes)
+    public SolicitudesController(SolicitudServicio solicitudes, GestionSolicitudServicio gestion)
     {
         _solicitudes = solicitudes;
+        _gestion = gestion;
     }
 
     [HttpPost]
@@ -51,4 +53,37 @@ public class SolicitudesController : ControllerBase
     [ProducesResponseType<List<MovimientoResponse>>(StatusCodes.Status200OK)]
     public async Task<IActionResult> Movimientos(int id, CancellationToken ct) =>
         Ok(await _solicitudes.ListarMovimientosAsync(id, User.ObtenerUsuarioId(), User.ObtenerRol(), ct));
+
+
+    [HttpPost("{id:int}/aprobar")]
+    [Authorize(Roles = "Tecnico")]
+    [ProducesResponseType<SolicitudResponse>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> Aprobar(int id, CancellationToken ct) =>
+        Ok(await _gestion.AprobarAsync(id, User.ObtenerUsuarioId(), ct));
+
+    [HttpPost("{id:int}/rechazar")]
+    [Authorize(Roles = "Tecnico")]
+    [ProducesResponseType<SolicitudResponse>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> Rechazar(int id, RechazarSolicitudRequest req, CancellationToken ct) =>
+        Ok(await _gestion.RechazarAsync(id, req, User.ObtenerUsuarioId(), ct));
+
+    [HttpPost("{id:int}/entregar")]
+    [Authorize(Roles = "Tecnico")]
+    [ProducesResponseType<SolicitudResponse>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> Entregar(int id, CancellationToken ct) =>
+        Ok(await _gestion.EntregarAsync(id, User.ObtenerUsuarioId(), ct));
+
+    [HttpPost("{id:int}/no-recogida")]
+    [Authorize(Roles = "Tecnico")]
+    [ProducesResponseType<SolicitudResponse>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> NoRecogida(int id, CancellationToken ct) =>
+        Ok(await _gestion.MarcarNoRecogidaAsync(id, User.ObtenerUsuarioId(), ct));
+
+    [HttpPost("{id:int}/devoluciones")]
+    [Authorize(Roles = "Tecnico")]
+    [ProducesResponseType<SolicitudResponse>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> Devolver(int id, RegistrarDevolucionRequest req, CancellationToken ct) =>
+        Ok(await _gestion.RegistrarDevolucionAsync(id, req, User.ObtenerUsuarioId(), ct));
+
+
 }
