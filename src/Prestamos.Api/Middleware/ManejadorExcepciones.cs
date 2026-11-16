@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Prestamos.Application.Exceptions;
 using Prestamos.Domain.Exceptions;
+using Microsoft.EntityFrameworkCore;
 
 namespace Prestamos.Api.Middleware;
 
@@ -23,6 +24,7 @@ public class ManejadorExcepciones : IExceptionHandler
             AccesoDenegadoException => (StatusCodes.Status403Forbidden, "Acceso denegado"),
             NoEncontradoException => (StatusCodes.Status404NotFound, "No encontrado"),
             BusinessRuleException => (StatusCodes.Status409Conflict, "Regla de negocio incumplida"),
+            DbUpdateException => (StatusCodes.Status409Conflict, "Conflicto de datos"),
             _ => (StatusCodes.Status500InternalServerError, "Error interno")
         };
 
@@ -30,8 +32,9 @@ public class ManejadorExcepciones : IExceptionHandler
         {
             Status = status,
             Title = titulo,
-            Detail = status == 500 ? "Ocurrió un error inesperado. Intenta de nuevo." : exception.Message,
-            Instance = context.Request.Path
+            Detail = status == 500 ? "Ocurrió un error inesperado. Intenta de nuevo."
+                   : exception is DbUpdateException ? "La operación entra en conflicto con datos existentes (por ejemplo, un registro duplicado)."
+                   : exception.Message,
         };
 
         if (exception is DatosInvalidosException invalidos)

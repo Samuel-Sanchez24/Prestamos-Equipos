@@ -18,6 +18,7 @@ public static class DatosSemilla
         modelBuilder.Entity<Recurso>().HasData(Recursos());
         modelBuilder.Entity<Solicitud>().HasData(Solicitudes());
         modelBuilder.Entity<DetalleSolicitud>().HasData(Detalles());
+        modelBuilder.Entity<Movimiento>().HasData(Movimientos());
     }
 
     private static Usuario[] Usuarios() =>
@@ -139,4 +140,66 @@ public static class DatosSemilla
         new() { Id = 9,  SolicitudId = 7, RecursoId = 8 },
         new() { Id = 10, SolicitudId = 8, RecursoId = 11 }
     ];
+
+    private static Movimiento[] Movimientos()
+    {
+        var id = 1000;
+        Movimiento M(string entidad, int entidadId, string? anterior, string nuevo, int usuario, DateTime fecha, string? obs) =>
+            new()
+            {
+                Id = ++id,
+                Entidad = entidad,
+                EntidadId = entidadId,
+                EstadoAnterior = anterior,
+                EstadoNuevo = nuevo,
+                UsuarioId = usuario,
+                Fecha = fecha,
+                Observacion = obs
+            };
+
+        var lista = new List<Movimiento>();
+
+        // Registro de los 12 recursos (administrador) y el daño de CM-002 (técnico)
+        for (var r = 1; r <= 12; r++)
+            lista.Add(M("Recurso", r, null, "Disponible", 1, FechaBase, "Recurso registrado"));
+        lista.Add(M("Recurso", 5, "Disponible", "Danado", 2, new(2026, 11, 5, 10, 0, 0), "Lente con hongos"));
+
+        // 1. Finalizada
+        lista.Add(M("Solicitud", 1, null, "Pendiente", 4, new(2026, 11, 2, 10, 0, 0), "Solicitud registrada"));
+        lista.Add(M("Solicitud", 1, "Pendiente", "Aprobada", 2, new(2026, 11, 2, 14, 0, 0), "Solicitud aprobada"));
+        lista.Add(M("Solicitud", 1, "Aprobada", "Entregada", 2, new(2026, 11, 3, 9, 0, 0), "Recursos entregados"));
+        lista.Add(M("Solicitud", 1, "Entregada", "Finalizada", 2, new(2026, 11, 6, 16, 0, 0), "Devuelto PT-001: Sin novedad"));
+
+        // 2. Entregada (vencida)
+        lista.Add(M("Solicitud", 2, null, "Pendiente", 4, new(2026, 11, 8, 11, 0, 0), "Solicitud registrada"));
+        lista.Add(M("Solicitud", 2, "Pendiente", "Aprobada", 2, new(2026, 11, 9, 8, 30, 0), "Solicitud aprobada"));
+        lista.Add(M("Solicitud", 2, "Aprobada", "Entregada", 2, new(2026, 11, 10, 8, 0, 0), "Recursos entregados"));
+
+        // 3. Entregada (activa)
+        lista.Add(M("Solicitud", 3, null, "Pendiente", 5, new(2026, 11, 10, 9, 0, 0), "Solicitud registrada"));
+        lista.Add(M("Solicitud", 3, "Pendiente", "Aprobada", 2, new(2026, 11, 10, 15, 0, 0), "Solicitud aprobada"));
+        lista.Add(M("Solicitud", 3, "Aprobada", "Entregada", 2, new(2026, 11, 12, 7, 30, 0), "Recursos entregados"));
+
+        // 4. Aprobada
+        lista.Add(M("Solicitud", 4, null, "Pendiente", 4, new(2026, 11, 13, 10, 0, 0), "Solicitud registrada"));
+        lista.Add(M("Solicitud", 4, "Pendiente", "Aprobada", 2, new(2026, 11, 14, 9, 0, 0), "Solicitud aprobada"));
+
+        // 5. Pendiente
+        lista.Add(M("Solicitud", 5, null, "Pendiente", 5, new(2026, 11, 15, 8, 0, 0), "Solicitud registrada"));
+
+        // 6. Rechazada
+        lista.Add(M("Solicitud", 6, null, "Pendiente", 4, new(2026, 11, 9, 16, 0, 0), "Solicitud registrada"));
+        lista.Add(M("Solicitud", 6, "Pendiente", "Rechazada", 2, new(2026, 11, 10, 8, 0, 0), "El recurso CM-002 fue reportado como dañado."));
+
+        // 7. Cancelada
+        lista.Add(M("Solicitud", 7, null, "Pendiente", 5, new(2026, 11, 11, 10, 0, 0), "Solicitud registrada"));
+        lista.Add(M("Solicitud", 7, "Pendiente", "Cancelada", 5, new(2026, 11, 12, 9, 0, 0), "Cancelada por el solicitante"));
+
+        // 8. No recogida
+        lista.Add(M("Solicitud", 8, null, "Pendiente", 4, new(2026, 11, 7, 12, 0, 0), "Solicitud registrada"));
+        lista.Add(M("Solicitud", 8, "Pendiente", "Aprobada", 2, new(2026, 11, 8, 9, 0, 0), "Solicitud aprobada"));
+        lista.Add(M("Solicitud", 8, "Aprobada", "NoRecogida", 2, new(2026, 11, 11, 17, 0, 0), "El solicitante no recogió los recursos"));
+
+        return lista.ToArray();
+    }
 }
