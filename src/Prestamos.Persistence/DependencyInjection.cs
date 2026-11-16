@@ -20,6 +20,8 @@ public static class DependencyInjection
         services.AddScoped<IRecursoRepositorio, RecursoRepositorio>();
         services.AddScoped<IMovimientoRepositorio, MovimientoRepositorio>();
 
+        services.AddScoped<ISolicitudRepositorio, SolicitudRepositorio>();
+
         return services;
     }
 }

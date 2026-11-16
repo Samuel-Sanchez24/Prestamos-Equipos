@@ -13,4 +13,21 @@ public class UnidadDeTrabajo : IUnidadDeTrabajo
     }
 
     public Task GuardarCambiosAsync(CancellationToken ct = default) => _db.SaveChangesAsync(ct);
+
+    public async Task<T> EnTransaccionAsync<T>(Func<Task<T>> operacion, CancellationToken ct = default)
+    {
+        await using var tx = await _db.Database.BeginTransactionAsync(ct);
+        try
+        {
+            var resultado = await operacion();
+            await tx.CommitAsync(ct);
+            return resultado;
+        }
+        catch
+        {
+            await tx.RollbackAsync(ct);
+            _db.ChangeTracker.Clear(); // Descarta lo que quedó a medias
+            throw;
+        }
+    }
 }

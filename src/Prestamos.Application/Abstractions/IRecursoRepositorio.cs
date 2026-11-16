@@ -14,4 +14,7 @@ public interface IRecursoRepositorio
         IReadOnlyCollection<int>? recursoIds = null, int? excluirSolicitudId = null, CancellationToken ct = default);
 
     Task<List<Solicitud>> ObtenerReservasVigentesAsync(int recursoId, DateOnly desde, CancellationToken ct = default);
+    Task<List<Recurso>> ObtenerPorIdsAsync(IReadOnlyCollection<int> ids, CancellationToken ct = default);
+
+    Task BloquearAsync(IReadOnlyCollection<int> ids, CancellationToken ct = default);
 }
