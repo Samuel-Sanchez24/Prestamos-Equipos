@@ -407,3 +407,27 @@ body {
     letter-spacing: -0.02em;
     line-height: 1.1;
 }
+
+/* ---------- Paneles laterales (slide-over) en blanco ---------- */
+.mud-drawer:not(.app-sidebar) {
+    --mud-palette-drawer-background: #FFFFFF;
+    --mud-palette-drawer-text: #0F172A;
+    --mud-palette-drawer-icon: #64748B;
+    background-color: #FFFFFF !important;
+    color: #0F172A !important;
+    border-left: 1px solid var(--itm-borde);
+}
+
+    .mud-drawer:not(.app-sidebar) .mud-input,
+    .mud-drawer:not(.app-sidebar) .mud-input-label,
+    .mud-drawer:not(.app-sidebar) .mud-typography {
+        color: #0F172A;
+    }
+
+    .mud-drawer:not(.app-sidebar) .mud-input-label {
+        background-color: #FFFFFF;
+    }
+
+    .mud-drawer:not(.app-sidebar) .mud-input-helper-text {
+        color: #64748B;
+    }
