@@ -10,21 +10,12 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.11" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.11" PrivateAssets="all" />
+    <PackageReference Include="MudBlazor" Version="9.12.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Prestamos.Contracts\Prestamos.Contracts.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Components\" />
-    <Folder Include="Services\" />
-    <Folder Include="Pages\Auth\" />
-    <Folder Include="Pages\Catalogo\" />
-    <Folder Include="Pages\Coordinacion\" />
-    <Folder Include="Pages\Admin\" />
-    <Folder Include="Pages\Tecnico\" />
-    <Folder Include="Pages\Solicitudes\" />
-  </ItemGroup>
 
 </Project>

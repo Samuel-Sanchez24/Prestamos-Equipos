@@ -1,0 +1,38 @@
+@* Muestra el contenido solo a usuarios autenticados y, si se indica, con uno de los roles permitidos.
+   La API valida de nuevo cada permiso: esto solo evita mostrar pantallas que no corresponden. *@
+@inject SesionUsuario Sesion
+@inject NavigationManager Nav
+
+@if (!Sesion.EstaAutenticado)
+{
+    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+}
+else if (!TienePermiso)
+{
+    <MudAlert Severity="Severity.Warning" Class="my-4">
+        Tu rol (@Sesion.Rol) no tiene acceso a esta sección.
+    </MudAlert>
+}
+else
+{
+    @ChildContent
+}
+
+@code {
+    /// <summary>Roles permitidos separados por coma. Vacío = cualquier usuario autenticado.</summary>
+    [Parameter] public string? Roles { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private bool TienePermiso =>
+        string.IsNullOrWhiteSpace(Roles) ||
+        Roles.Split(',', StringSplitOptions.TrimEntries).Contains(Sesion.Rol);
+
+    protected override void OnInitialized()
+    {
+        if (!Sesion.EstaAutenticado)
+        {
+            var volver = Nav.ToBaseRelativePath(Nav.Uri);
+            Nav.NavigateTo($"login?volver={Uri.EscapeDataString(volver)}");
+        }
+    }
+}
