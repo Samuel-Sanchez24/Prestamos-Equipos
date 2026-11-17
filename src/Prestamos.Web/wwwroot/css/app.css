@@ -399,3 +399,11 @@ body {
     bottom: 16px;
     z-index: 5;
 }
+
+/* ---------- KPIs del panel ---------- */
+.kpi-valor {
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+}
