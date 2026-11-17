@@ -1,0 +1,230 @@
+﻿@page "/admin/recursos"
+@inject ApiCliente Api
+@inject SesionUsuario Sesion
+@inject ISnackbar Snackbar
+
+<PageTitle>Recursos y categorías · Préstamos ITM</PageTitle>
+
+<Protegida Roles="Administrador">
+    <div class="d-flex align-center justify-space-between flex-wrap gap-2 mb-4">
+        <MudText Color="Color.Secondary">Administración del catálogo (RF-04).</MudText>
+        <div class="d-flex gap-2">
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.CreateNewFolder"
+                       OnClick="AbrirCategoria">Nueva categoría</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+                       OnClick="AbrirNuevoRecurso">Nuevo recurso</MudButton>
+        </div>
+    </div>
+
+    <MudPaper Class="pa-4" Elevation="1">
+        <div class="d-flex align-center justify-space-between flex-wrap gap-2 mb-2">
+            <MudText Typo="Typo.h6">Recursos (incluye dados de baja)</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Categorías: @string.Join(" · ", _categorias.Select(c => c.Nombre))
+            </MudText>
+        </div>
+        <AlertaError Problema="_error" />
+        <MudSimpleTable Hover="true" Dense="true">
+            <thead>
+                <tr><th>Código</th><th>Recurso</th><th>Categoría</th><th>Ubicación</th><th>Estado</th><th></th></tr>
+            </thead>
+            <tbody>
+                @foreach (var r in _recursos)
+                {
+                    <tr>
+                        <td class="mono">@r.Codigo</td>
+                        <td>@r.Nombre</td>
+                        <td>@r.Categoria</td>
+                        <td>@(r.Ubicacion ?? "—")</td>
+                        <td><EstadoChip Estado="@r.EstadoOperativo" /></td>
+                        <td style="text-align: right;">
+                            <div class="d-flex gap-1 justify-end">
+                                <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Primary" OnClick="@(() => Editar(r))">Editar</MudButton>
+                                @if (r.EstadoOperativo != "DadoDeBaja")
+                                {
+                                    <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Error" Disabled="_procesando"
+                                               OnClick="@(() => DarDeBajaAsync(r))">Dar de baja</MudButton>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </MudSimpleTable>
+    </MudPaper>
+
+    @* ---------- Slide-over: categoría o recurso ---------- *@
+    <MudDrawer @bind-Open="_panelAbierto" Anchor="Anchor.End" Variant="DrawerVariant.Temporary"
+               Width="420px" Elevation="2" Overlay="true">
+        <MudDrawerHeader Class="d-flex align-center justify-space-between">
+            <MudText Typo="Typo.h6">@TituloPanel</MudText>
+            <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="() => _panelAbierto = false" aria-label="Cerrar" />
+        </MudDrawerHeader>
+        <div class="slide-over__contenido">
+            <AlertaError Problema="_errorPanel" />
+
+            @if (_modo == Modo.Categoria)
+            {
+                <MudTextField T="string" @bind-Value="_nuevaCategoria.Nombre" Label="Nombre de la categoría" Variant="Variant.Outlined"
+                              ShrinkLabel="true" Immediate="true" />
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Disabled="_procesando" OnClick="CrearCategoriaAsync">
+                    Crear categoría
+                </MudButton>
+            }
+            else
+            {
+                <MudTextField T="string" @bind-Value="_recurso.Codigo" Label="Código" Variant="Variant.Outlined" ShrinkLabel="true" Immediate="true"
+                              HelperText="Formato AA-000 (ej.: PT-004)" Disabled="@(_editandoId is not null)" Class="mono" />
+                <MudTextField T="string" @bind-Value="_recurso.Nombre" Label="Nombre" Variant="Variant.Outlined" ShrinkLabel="true" Immediate="true" />
+                <MudSelect T="int" @bind-Value="_recurso.CategoriaId" Label="Categoría" Variant="Variant.Outlined" ShrinkLabel="true">
+                    @foreach (var c in _categorias)
+                    {
+                        <MudSelectItem T="int" Value="@c.Id">@c.Nombre</MudSelectItem>
+                    }
+                </MudSelect>
+                <MudTextField T="string" @bind-Value="_recurso.Descripcion" Label="Descripción" Variant="Variant.Outlined" ShrinkLabel="true"
+                              Immediate="true" Lines="2" />
+                <MudTextField T="string" @bind-Value="_recurso.Ubicacion" Label="Ubicación" Variant="Variant.Outlined" ShrinkLabel="true" Immediate="true" />
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Disabled="_procesando" OnClick="GuardarRecursoAsync">
+                    @(_editandoId is null ? "Registrar recurso" : "Guardar cambios")
+                </MudButton>
+            }
+            <MudButton Variant="Variant.Outlined" FullWidth="true" OnClick="() => _panelAbierto = false">Cancelar</MudButton>
+        </div>
+    </MudDrawer>
+</Protegida>
+
+@code {
+    private enum Modo { Categoria, Recurso }
+
+    private List<CategoriaResponse> _categorias = [];
+    private List<RecursoResponse> _recursos = [];
+    private CrearCategoriaRequest _nuevaCategoria = new();
+    private CrearRecursoRequest _recurso = new();
+    private int? _editandoId;
+
+    private bool _panelAbierto;
+    private Modo _modo = Modo.Recurso;
+    private bool _procesando;
+    private Problema? _error;
+    private Problema? _errorPanel;
+
+    private string TituloPanel => _modo == Modo.Categoria
+        ? "Nueva categoría"
+        : _editandoId is null ? "Nuevo recurso" : $"Editar {_recurso.Codigo}";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Sesion.EsRol("Administrador")) await CargarAsync();
+    }
+
+    private async Task CargarAsync()
+    {
+        var c = await Api.GetAsync<List<CategoriaResponse>>("api/categorias");
+        if (c.Exito) _categorias = c.Datos ?? [];
+
+        var r = await Api.GetAsync<List<RecursoResponse>>("api/recursos?incluirDadosDeBaja=true");
+        if (r.Exito) { _recursos = r.Datos ?? []; _error = null; }
+        else _error = r.Problema;
+    }
+
+    private void AbrirCategoria()
+    {
+        _modo = Modo.Categoria;
+        _nuevaCategoria = new CrearCategoriaRequest();
+        _errorPanel = null;
+        _panelAbierto = true;
+    }
+
+    private void AbrirNuevoRecurso()
+    {
+        _modo = Modo.Recurso;
+        _editandoId = null;
+        _recurso = new CrearRecursoRequest { CategoriaId = _categorias.FirstOrDefault()?.Id ?? 0 };
+        _errorPanel = null;
+        _panelAbierto = true;
+    }
+
+    private void Editar(RecursoResponse r)
+    {
+        _modo = Modo.Recurso;
+        _editandoId = r.Id;
+        _errorPanel = null;
+        _recurso = new CrearRecursoRequest
+        {
+            Codigo = r.Codigo,
+            Nombre = r.Nombre,
+            CategoriaId = r.CategoriaId,
+            Descripcion = r.Descripcion,
+            Ubicacion = r.Ubicacion
+        };
+        _panelAbierto = true;
+    }
+
+    private async Task CrearCategoriaAsync()
+    {
+        _procesando = true;
+        _errorPanel = null;
+        var r = await Api.PostAsync<CategoriaResponse>("api/categorias", _nuevaCategoria);
+        _procesando = false;
+
+        if (!r.Exito)
+        {
+            _errorPanel = r.Problema;
+            return;
+        }
+        Snackbar.Add($"Categoría '{r.Datos?.Nombre}' creada.", Severity.Success);
+        _panelAbierto = false;
+        await CargarAsync();
+    }
+
+    private async Task GuardarRecursoAsync()
+    {
+        _procesando = true;
+        _errorPanel = null;
+
+        Resultado<RecursoResponse> r;
+        if (_editandoId is null)
+        {
+            r = await Api.PostAsync<RecursoResponse>("api/recursos", _recurso);
+        }
+        else
+        {
+            r = await Api.PutAsync<RecursoResponse>($"api/recursos/{_editandoId}", new ActualizarRecursoRequest
+            {
+                Nombre = _recurso.Nombre,
+                CategoriaId = _recurso.CategoriaId,
+                Descripcion = _recurso.Descripcion,
+                Ubicacion = _recurso.Ubicacion
+            });
+        }
+        _procesando = false;
+
+        if (!r.Exito)
+        {
+            _errorPanel = r.Problema;
+            return;
+        }
+        Snackbar.Add($"Recurso {r.Datos?.Codigo} guardado.", Severity.Success);
+        _panelAbierto = false;
+        await CargarAsync();
+    }
+
+    private async Task DarDeBajaAsync(RecursoResponse recurso)
+    {
+        _procesando = true;
+        var r = await Api.PatchAsync<CambioEstadoRecursoResponse>($"api/recursos/{recurso.Id}/estado",
+            new CambiarEstadoRecursoRequest { Estado = "DadoDeBaja", Observacion = "Dado de baja por el administrador" });
+        _procesando = false;
+
+        if (r.Exito)
+        {
+            Snackbar.Add($"{recurso.Codigo} dado de baja.", Severity.Success);
+            await CargarAsync();
+        }
+        else
+        {
+            Snackbar.Add(r.Problema?.Mensaje ?? "No se pudo dar de baja.", Severity.Error);
+        }
+    }
+}
