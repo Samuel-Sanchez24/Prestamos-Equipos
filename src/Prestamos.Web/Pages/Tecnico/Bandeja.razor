@@ -1,0 +1,284 @@
+﻿@page "/tecnico/bandeja"
+@inject ApiCliente Api
+@inject SesionUsuario Sesion
+@inject ISnackbar Snackbar
+
+<PageTitle>Bandeja del técnico · Préstamos ITM</PageTitle>
+
+<Protegida Roles="Tecnico">
+    <div class="d-flex align-center justify-space-between flex-wrap gap-2 mb-4">
+        <MudText Color="Color.Secondary">Evalúa, entrega y recibe devoluciones sin salir de la bandeja (CA-03, CA-04, CA-05).</MudText>
+        <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Refresh" OnClick="CargarAsync">Actualizar</MudButton>
+    </div>
+
+    <AlertaError Problema="_error" />
+    @if (_cargando)
+    {
+        <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mb-2" />
+    }
+
+    <MudTabs Elevation="1" Rounded="true" PanelClass="pa-4">
+        <MudTabPanel Text="@($"Pendientes ({_pendientes.Count})")">
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-2">En orden de llegada: la primera registrada tiene prioridad.</MudText>
+            @Tabla(_pendientes)
+        </MudTabPanel>
+        <MudTabPanel Text="@($"Por entregar ({_aprobadas.Count})")">
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-2">Solicitudes aprobadas: se entregan a partir de su fecha de inicio.</MudText>
+            @Tabla(_aprobadas)
+        </MudTabPanel>
+        <MudTabPanel Text="@($"En préstamo ({_entregadas.Count})")">
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-2">Los vencidos aparecen primero. Gestiona cada uno para registrar la devolución.</MudText>
+            @Tabla(_entregadas)
+        </MudTabPanel>
+    </MudTabs>
+
+    @* ---------- Slide-over: gestionar solicitud ---------- *@
+    <MudDrawer @bind-Open="_panelAbierto" Anchor="Anchor.End" Variant="DrawerVariant.Temporary"
+               Width="460px" Elevation="2" Overlay="true">
+        @if (_actual is not null)
+        {
+            <MudDrawerHeader Class="d-flex align-center justify-space-between">
+                <div>
+                    <MudText Typo="Typo.h6">Solicitud <span class="mono">#@_actual.Id</span></MudText>
+                    <div class="d-flex gap-1 mt-1">
+                        <EstadoChip Estado="@_actual.Estado" />
+                        @if (_actual.Vencida)
+                        {
+                            <EstadoChip Estado="Vencida" />
+                        }
+                    </div>
+                </div>
+                <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="() => _panelAbierto = false" aria-label="Cerrar" />
+            </MudDrawerHeader>
+
+            <div class="slide-over__contenido">
+                <div class="slide-over__fila"><span>Solicitante</span><span>@_actual.Solicitante (@_actual.TipoSolicitante)</span></div>
+                <div class="slide-over__fila"><span>Período</span><span class="mono">@Formato.Corta(_actual.FechaInicio) – @Formato.Corta(_actual.FechaFin)</span></div>
+                <div class="slide-over__fila"><span>Registrada</span><span class="mono">@Formato.Corta(_actual.FechaRegistro)</span></div>
+                <MudText Typo="Typo.body2"><span class="mud-text-secondary">Motivo:</span> @_actual.Motivo</MudText>
+
+                <AlertaError Problema="_errorAccion" />
+                <MudDivider />
+
+                @* ----- Pendiente: aprobar o rechazar ----- *@
+                @if (_actual.Estado == "Pendiente")
+                {
+                    <MudText Typo="Typo.subtitle2">Recursos</MudText>
+                    @foreach (var d in _actual.Recursos)
+                    {
+                        <div class="slide-over__fila"><span class="mono">@d.Codigo</span><span>@d.Nombre</span></div>
+                    }
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Disabled="_procesando"
+                               OnClick="@(() => AccionAsync("aprobar", null, "aprobada."))">Aprobar</MudButton>
+                    <MudTextField T="string" @bind-Value="_motivoRechazo" Label="Motivo del rechazo" Variant="Variant.Outlined"
+                                  ShrinkLabel="true" Immediate="true" Lines="2" />
+                    <MudButton Variant="Variant.Outlined" Color="Color.Error" FullWidth="true" Disabled="_procesando"
+                               OnClick="@(() => AccionAsync("rechazar", new RechazarSolicitudRequest { Motivo = _motivoRechazo ?? string.Empty }, "rechazada."))">
+                        Rechazar
+                    </MudButton>
+                }
+
+                @* ----- Aprobada: registrar entrega ----- *@
+                @if (_actual.Estado == "Aprobada")
+                {
+                    <MudText Typo="Typo.subtitle2">Recursos a entregar</MudText>
+                    @foreach (var d in _actual.Recursos)
+                    {
+                        <div class="slide-over__fila"><span class="mono">@d.Codigo</span><span>@d.Nombre</span></div>
+                    }
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Disabled="_procesando"
+                               StartIcon="@Icons.Material.Filled.Outbox"
+                               OnClick="@(() => AccionAsync("entregar", null, "recursos entregados."))">Registrar entrega</MudButton>
+                    <MudButton Variant="Variant.Outlined" FullWidth="true" Disabled="_procesando"
+                               OnClick="@(() => AccionAsync("no-recogida", null, "marcada como no recogida."))">Marcar como no recogida</MudButton>
+                }
+
+                @* ----- Entregada: devolución por recurso ----- *@
+                @if (_actual.Estado == "Entregada")
+                {
+                    <MudText Typo="Typo.subtitle2">Registrar devolución (RF-16)</MudText>
+                    @foreach (var d in _actual.Recursos)
+                    {
+                        var form = Formulario(d.RecursoId);
+                        <MudPaper Elevation="0" Outlined="true" Class="pa-3">
+                            <div class="slide-over__fila mb-2">
+                                <span class="mono">@d.Codigo</span><strong>@d.Nombre</strong>
+                            </div>
+                            @if (d.FechaDevolucion is not null)
+                            {
+                                <div class="d-flex gap-2 align-center">
+                                    <EstadoChip Estado="Devuelto" />
+                                    @if (d.DevueltoConDano)
+                                    {
+                                        <EstadoChip Estado="Danado" />
+                                    }
+                                    <span class="mono mud-text-secondary">@Formato.Corta(d.FechaDevolucion)</span>
+                                </div>
+                            }
+                            else
+                            {
+                                <MudCheckBox T="bool" @bind-Value="form.ConDano" Label="Devuelto con daño" Color="Color.Error" Dense="true" />
+                                <MudTextField T="string" @bind-Value="form.Observacion" Label="Observación" Variant="Variant.Outlined"
+                                              ShrinkLabel="true" Immediate="true" Margin="Margin.Dense" Class="mb-2" />
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Disabled="_procesando"
+                                           OnClick="@(() => DevolverAsync(d.RecursoId))">Registrar devolución</MudButton>
+                            }
+                        </MudPaper>
+                    }
+                }
+
+                <MudDivider />
+                <MudButton Href="@($"solicitudes/{_actual.Id}")" Variant="Variant.Text" Color="Color.Primary"
+                           EndIcon="@Icons.Material.Filled.OpenInNew">Ver detalle completo e historial</MudButton>
+            </div>
+        }
+    </MudDrawer>
+</Protegida>
+
+@code {
+    private class FormularioDevolucion
+    {
+        public bool ConDano { get; set; }
+        public string? Observacion { get; set; }
+    }
+
+    private List<SolicitudResponse> _pendientes = [];
+    private List<SolicitudResponse> _aprobadas = [];
+    private List<SolicitudResponse> _entregadas = [];
+    private readonly Dictionary<int, FormularioDevolucion> _devoluciones = [];
+
+    private bool _cargando;
+    private bool _procesando;
+    private Problema? _error;
+    private Problema? _errorAccion;
+
+    // Slide-over
+    private bool _panelAbierto;
+    private SolicitudResponse? _actual;
+    private string? _motivoRechazo;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Sesion.EsRol("Tecnico")) await CargarAsync();
+    }
+
+    private async Task CargarAsync()
+    {
+        _cargando = true;
+        _error = null;
+        _pendientes = await ListarAsync("Pendiente");
+        _aprobadas = await ListarAsync("Aprobada");
+        _entregadas = (await ListarAsync("Entregada")).OrderByDescending(s => s.Vencida).ThenBy(s => s.FechaFin).ToList();
+        _cargando = false;
+    }
+
+    private async Task<List<SolicitudResponse>> ListarAsync(string estado)
+    {
+        var r = await Api.GetAsync<List<SolicitudResponse>>($"api/solicitudes?estado={estado}");
+        if (!r.Exito) _error = r.Problema;
+        return r.Datos ?? [];
+    }
+
+    private FormularioDevolucion Formulario(int recursoId)
+    {
+        if (!_devoluciones.TryGetValue(recursoId, out var form))
+        {
+            form = new FormularioDevolucion();
+            _devoluciones[recursoId] = form;
+        }
+        return form;
+    }
+
+    private void Abrir(SolicitudResponse s)
+    {
+        _actual = s;
+        _errorAccion = null;
+        _motivoRechazo = null;
+        _devoluciones.Clear();
+        _panelAbierto = true;
+    }
+
+    private async Task RefrescarActualAsync()
+    {
+        if (_actual is null) return;
+        var r = await Api.GetAsync<SolicitudResponse>($"api/solicitudes/{_actual.Id}");
+        if (r.Exito && r.Datos is not null) _actual = r.Datos;
+    }
+
+    private async Task<bool> AccionAsync(string accion, object? cuerpo, string mensaje)
+    {
+        if (_actual is null) return false;
+        _procesando = true;
+        _errorAccion = null;
+
+        var r = await Api.PostAsync<object>($"api/solicitudes/{_actual.Id}/{accion}", cuerpo);
+        _procesando = false;
+
+        if (!r.Exito)
+        {
+            _errorAccion = r.Problema;
+            return false;
+        }
+
+        Snackbar.Add($"Solicitud #{_actual.Id}: {mensaje}", Severity.Success);
+        await CargarAsync();
+        await RefrescarActualAsync();
+
+        // Se cierra el panel cuando la solicitud sale de la bandeja actual
+        if (_actual.Estado is not ("Pendiente" or "Aprobada" or "Entregada")) _panelAbierto = false;
+        return true;
+    }
+
+    private async Task DevolverAsync(int recursoId)
+    {
+        var form = Formulario(recursoId);
+        var ok = await AccionAsync("devoluciones",
+            new RegistrarDevolucionRequest { RecursoId = recursoId, DevueltoConDano = form.ConDano, Observacion = form.Observacion },
+            form.ConDano ? "devolución registrada; el recurso quedó como dañado." : "devolución registrada.");
+        if (ok) _devoluciones.Remove(recursoId);
+    }
+
+    private RenderFragment Tabla(List<SolicitudResponse> lista) => __builder =>
+    {
+        <MudSimpleTable Hover="true" Dense="true">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Solicitante</th>
+                    <th>Recursos</th>
+                    <th>Desde</th>
+                    <th>Hasta</th>
+                    <th>Estado</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (lista.Count == 0)
+                {
+                    <tr><td colspan="7" class="text-center pa-4">No hay solicitudes en esta bandeja.</td></tr>
+                }
+                @foreach (var s in lista)
+                {
+                    <tr>
+                        <td class="mono">#@s.Id</td>
+                        <td>@s.Solicitante <span class="mud-text-secondary">(@s.TipoSolicitante)</span></td>
+                        <td class="mono">@string.Join(", ", s.Recursos.Select(r => r.Codigo))</td>
+                        <td class="mono">@Formato.Corta(s.FechaInicio)</td>
+                        <td class="mono">@Formato.Corta(s.FechaFin)</td>
+                        <td>
+                            <EstadoChip Estado="@s.Estado" />
+                            @if (s.Vencida)
+                            {
+                                <EstadoChip Estado="Vencida" />
+                            }
+                        </td>
+                        <td style="text-align: right;">
+                            <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary"
+                                       OnClick="@(() => Abrir(s))">Gestionar</MudButton>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </MudSimpleTable>
+    };
+}

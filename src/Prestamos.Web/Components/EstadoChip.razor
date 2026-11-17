@@ -1,0 +1,29 @@
+@* Badge tipo píldora para estados de solicitud, recurso, préstamo o prórroga (contraste AA) *@
+<span class="estado estado--@_clase">@_texto</span>
+
+@code {
+    [Parameter] public string Estado { get; set; } = string.Empty;
+
+    private string _clase = "neutro";
+    private string _texto = string.Empty;
+
+    protected override void OnParametersSet()
+    {
+        (_clase, _texto) = Estado switch
+        {
+            "Pendiente" => ("pendiente", "Pendiente"),
+            "NoRecogida" => ("no-recogida", "No recogida"),
+            "Aprobada" => ("aprobada", "Aprobada"),
+            "Entregada" or "Activo" => ("entregada", Estado == "Activo" ? "Activo" : "Entregada"),
+            "Finalizada" => ("exito", "Finalizada"),
+            "Disponible" => ("exito", "Disponible"),
+            "Devuelto" => ("exito", "Devuelto"),
+            "Rechazada" => ("error", "Rechazada"),
+            "Danado" => ("error", "Dañado"),
+            "Vencido" or "Vencida" => ("vencida", "Vencida"),
+            "Cancelada" => ("neutro", "Cancelada"),
+            "DadoDeBaja" => ("neutro", "Dado de baja"),
+            _ => ("neutro", Estado)
+        };
+    }
+}

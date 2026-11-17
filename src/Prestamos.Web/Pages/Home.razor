@@ -1,7 +1,56 @@
 ﻿@page "/"
+@inject SesionUsuario Sesion
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Inicio · Préstamos ITM</PageTitle>
 
-<h1>Hello, world!</h1>
+<Protegida>
+    <h1 class="mud-typography mud-typography-h4 mb-1">Hola, @Sesion.Nombre</h1>
+    <MudText Color="Color.Secondary" Class="mb-6">¿Qué quieres hacer hoy?</MudText>
 
-Welcome to your new app.
+    <MudGrid>
+        @foreach (var acceso in Accesos)
+        {
+            <MudItem xs="12" sm="6" md="4">
+                <MudPaper Class="pa-5 acceso" Elevation="1">
+                    <MudIcon Icon="@acceso.Icono" Color="Color.Primary" Size="Size.Large" />
+                    <MudText Typo="Typo.h6" Class="mt-2">@acceso.Titulo</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-3">@acceso.Descripcion</MudText>
+                    <MudButton Href="@acceso.Ruta" Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small">Abrir</MudButton>
+                </MudPaper>
+            </MudItem>
+        }
+    </MudGrid>
+</Protegida>
+
+@code {
+    private record Acceso(string Titulo, string Descripcion, string Ruta, string Icono);
+
+    private IEnumerable<Acceso> Accesos => Sesion.Rol switch
+    {
+        "Solicitante" => new Acceso[]
+        {
+            new Acceso("Catálogo", "Consulta la disponibilidad por fechas y reserva recursos.", "catalogo", Icons.Material.Filled.Inventory2),
+            new Acceso("Mis solicitudes", "Revisa el estado, cancela o pide prórroga.", "solicitudes", Icons.Material.Filled.Assignment)
+        },
+        "Tecnico" => new Acceso[]
+        {
+            new Acceso("Bandeja", "Aprueba, entrega y registra devoluciones.", "tecnico/bandeja", Icons.Material.Filled.Inbox),
+            new Acceso("Prórrogas", "Evalúa las solicitudes de más tiempo.", "tecnico/prorrogas", Icons.Material.Filled.EventRepeat),
+            new Acceso("Catálogo", "Reporta recursos dañados o reparados.", "catalogo", Icons.Material.Filled.Inventory2),
+            new Acceso("Panel consolidado", "Indicadores y préstamos con responsables.", "coordinacion", Icons.Material.Filled.Insights)
+        },
+        "Coordinacion" => new Acceso[]
+        {
+            new Acceso("Panel consolidado", "Indicadores, préstamos activos y vencidos.", "coordinacion", Icons.Material.Filled.Insights),
+            new Acceso("Solicitudes", "Consulta todas las solicitudes y su historial.", "solicitudes", Icons.Material.Filled.Assignment),
+            new Acceso("Catálogo", "Disponibilidad de los recursos.", "catalogo", Icons.Material.Filled.Inventory2)
+        },
+        "Administrador" => new Acceso[]
+        {
+            new Acceso("Usuarios", "Registra técnicos y coordinadores.", "admin/usuarios", Icons.Material.Filled.ManageAccounts),
+            new Acceso("Recursos y categorías", "Administra el catálogo.", "admin/recursos", Icons.Material.Filled.Category),
+            new Acceso("Catálogo", "Disponibilidad de los recursos.", "catalogo", Icons.Material.Filled.Inventory2)
+        },
+        _ => Array.Empty<Acceso>()
+    };
+}

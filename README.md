@@ -7,7 +7,7 @@ Aplicación web para gestionar el préstamo temporal de equipos y recursos de un
 | Componente | Estado |
 |---|---|
 | Backend: API REST + base de datos | ✅ Completo: cubre CA-01 a CA-06 |
-| Frontend (Blazor WebAssembly) | 🔄 En desarrollo |
+| Frontend (Blazor WebAssembly + MudBlazor) | ✅ Completo: pantallas por rol conectadas a la API |
 
 ---
 
@@ -23,7 +23,7 @@ Aplicación web para gestionar el préstamo temporal de equipos y recursos de un
 | Integrante | Contribución |
 |---|---|
 | Samuel Andrés Sánchez Orrego | Requisitos, diseño, backend completo (dominio, persistencia, API REST, seguridad, reglas de negocio), pruebas funcionales y documentación. |
-| Dani Moreno Ciro | Levantamiento de requisitos (entrevista) y frontend en Blazor WebAssembly (cliente HTTP, layout, autenticación). |
+| Dani Moreno Ciro | Levantamiento de requisitos (entrevista); frontend en Blazor WebAssembly con MudBlazor: cliente HTTP, sesión, pantallas por rol e integración con la API. |
 
 ---
 
@@ -82,6 +82,22 @@ flowchart LR
 - Las reservas simultáneas se controlan con **bloqueo de filas** (`UPDLOCK, HOLDLOCK`) dentro de una transacción.
 - Cada cambio de estado se registra en `Movimientos`.
 
+
+**Pantallas del frontend** (`src/Prestamos.Web`). El menú lateral muestra solo las del rol del usuario:
+
+| Ruta | Pantalla | Rol | CA |
+|---|---|---|---|
+| `/login`, `/registro` | Inicio de sesión y registro | Público | — |
+| `/catalogo` | Catálogo con disponibilidad por fechas: tarjetas para el solicitante (selección y envío de la solicitud) y tabla para el personal. El detalle del equipo se abre en un panel lateral, donde el técnico reporta daño o reparación y el administrador da de baja. | Todos | CA-01, CA-02 |
+| `/solicitudes` | Mis solicitudes (solicitante) o todas (personal), con filtros | Todos | CA-02, CA-05 |
+| `/solicitudes/{id}` | Detalle: cancelar, pedir prórroga, aprobar o rechazar, entregar, no recogida, devolución por recurso, prórrogas e historial | Todos (acciones según rol) | CA-02 a CA-05 |
+| `/tecnico/bandeja` | Pendientes, por entregar y en préstamo. Aprobar, rechazar, entregar y registrar devoluciones en un panel lateral, sin salir de la tabla | Técnico | CA-03, CA-04, CA-05 |
+| `/tecnico/prorrogas` | Aprobar o rechazar prórrogas | Técnico | CA-05 |
+| `/coordinacion` | Indicadores, préstamos con responsables y filtros | Coordinación, Técnico | CA-06 |
+| `/admin/usuarios`, `/admin/recursos` | Personal, categorías y recursos, con formularios en panel lateral | Administrador | — |
+
+**Sistema de diseño.** Índigo `#4F46E5` como color primario, fondo `#F8FAFC`, tipografía Inter (JetBrains Mono para códigos y fechas), sidebar oscuro, estados en píldoras con contraste AA y paneles laterales deslizables (`wwwroot/css/app.css`, `Theme/PrestamosTheme.cs`).
+
 Diseño completo, con diagrama ER, diagramas de estado, especificación de la API y prototipos: [`docs/diseno.md`](docs/diseno.md).
 
 ---
@@ -126,11 +142,21 @@ cd Prestamos-Equipos
   dotnet ef database update --project src/Prestamos.Persistence --startup-project src/Prestamos.Api
   ```
 
-**5. Ejecutar la API**
-- En Visual Studio: proyecto de inicio `Prestamos.Api`, perfil **https** → F5.
-- O desde la terminal: `dotnet run --project src/Prestamos.Api --launch-profile https`
+**5. Ejecutar la API y el frontend**
+- En Visual Studio: clic derecho en la solución → **Configurar proyectos de inicio** → **Varios** → `Prestamos.Api` y `Prestamos.Web` en **Iniciar**, perfil **https** → **Ctrl+F5** (*Iniciar sin depurar*). Con F5 el depurador se detiene en las excepciones de negocio (400/404/409) que la API ya convierte en ProblemDetails.
+- O desde dos terminales:
+  ```bash
+  dotnet run --project src/Prestamos.Api --launch-profile https
+  dotnet run --project src/Prestamos.Web --launch-profile https
+  ```
 
-**6. Abrir la documentación interactiva:** https://localhost:7011/swagger
+**6. Abrir la aplicación**
+| Qué | URL |
+|---|---|
+| Aplicación web | https://localhost:7262 |
+| Documentación de la API (Swagger) | https://localhost:7011/swagger |
+
+El frontend toma la URL de la API de `src/Prestamos.Web/wwwroot/appsettings.json` (`ApiUrl`), y la API acepta su origen por CORS (`Cors:OrigenesPermitidos`).
 
 ### 5.3 Usuarios de prueba (ficticios)
 Todos usan la contraseña **`Prestamos2026*`**.
@@ -238,7 +264,7 @@ Respuesta `201 Created`, con el encabezado `Location: /api/solicitudes/9`:
 
 ## 7. Pruebas y evidencias
 
-Se ejecutaron **94 pruebas funcionales** con Swagger UI, organizadas por módulo:
+Se ejecutaron **94 pruebas funcionales** de la API con Swagger UI y la **prueba de integración P-12** desde la interfaz web:
 
 | Módulo | Pruebas | Evidencias |
 |---|---:|---|
@@ -249,6 +275,7 @@ Se ejecutaron **94 pruebas funcionales** con Swagger UI, organizadas por módulo
 | Gestión del técnico (ciclo completo) | 20 | [`evidencias/gestion`](evidencias/gestion) |
 | Prórrogas | 16 | [`evidencias/prorrogas`](evidencias/prorrogas) |
 | Consolidado de Coordinación | 14 | [`evidencias/reportes`](evidencias/reportes) |
+| Integración interfaz–API–base de datos (P-12) | 1 flujo | [`evidencias/integracion`](evidencias/integracion) |
 
 - **Las 12 pruebas mínimas de la guía**, con condiciones iniciales, pasos, datos, resultados y evidencias: [`docs/pruebas.md`](docs/pruebas.md).
 - **Matriz de trazabilidad:** [`docs/trazabilidad.md`](docs/trazabilidad.md).
@@ -290,16 +317,18 @@ Historial completo: [Pull requests](https://github.com/Samuel-Sanchez24/Prestamo
 - **CA-05:** devolución por recurso, actualización de la disponibilidad e historial.
 - **CA-06:** consolidado con estados y responsables.
 
+El frontend cubre las mismas condiciones desde la interfaz, con pantallas por rol y el ciclo completo de préstamo demostrado de punta a punta (P-12).
+
 **Dificultades y soluciones.**
 | Dificultad | Solución |
 |---|---|
 | Garantizar "al primero que lo pida" ante solicitudes simultáneas | Una restricción única no impide que se crucen rangos de fechas. Se usó una transacción con bloqueo `UPDLOCK, HOLDLOCK` sobre los recursos. |
 | Disponibilidad con reservas a futuro | Se calcula por cruce de fechas en lugar de guardar un estado "prestado". |
+| Errores de la API legibles en la interfaz | El frontend centraliza las llamadas en `ApiCliente`, que interpreta los ProblemDetails (400/401/403/404/409) y los muestra con el detalle por campo. |
 | Windows bloqueaba las DLL al generar migraciones | Se desactivó el Control Inteligente de Aplicaciones en el equipo de desarrollo. |
 | Proyectos creados con la plantilla de .NET Framework | Se migraron a proyectos SDK de .NET 10. |
 
 **Limitaciones.**
-- La **integración con el frontend** (prueba 12 de la guía) está pendiente de que se complete la interfaz Blazor.
 - Las fechas de los datos semilla son fijas (noviembre y diciembre de 2026). Si se ejecuta más adelante, algunas solicitudes de ejemplo aparecerán vencidas.
 - El consolidado se calcula en memoria. Es adecuado para el volumen de una institución, pero para grandes volúmenes convendría agregarlo en SQL.
 - No hay pruebas automatizadas; la guía no las exige. El proyecto `Prestamos.Test` queda preparado para agregarlas.
