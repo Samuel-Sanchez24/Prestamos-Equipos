@@ -4,32 +4,53 @@
 @inject NavigationManager Nav
 
 <MudLayout>
+    @if (Sesion.EstaAutenticado)
+    {
+        <MudDrawer @bind-Open="_menuAbierto" Variant="DrawerVariant.Responsive" Elevation="0"
+                   Width="248px" Class="app-sidebar">
+            <div class="app-sidebar__brand">PRÉSTAMOS ITM</div>
+            <NavMenu />
+        </MudDrawer>
+    }
+
     <MudAppBar Elevation="0" Class="app-bar">
         @if (Sesion.EstaAutenticado)
         {
             <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start"
                            OnClick="AlternarMenu" aria-label="Abrir o cerrar el menú" />
+            <MudText Typo="Typo.h6" Class="ml-2 app-bar__title">@Titulo</MudText>
+            <MudSpacer />
+            <MudTextField T="string" @bind-Value="_busqueda" Placeholder="Buscar equipo por código o nombre"
+                          Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                          OnKeyUp="Buscar" Class="app-bar__search" />
+            <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Class="ml-3">
+                <ActivatorContent>
+                    <div class="usuario-menu ml-3">
+                        <MudAvatar Size="Size.Small" Color="Color.Primary">@Inicial</MudAvatar>
+                        <div class="usuario-info">
+                            <div class="usuario-info__nombre">@Sesion.Nombre</div>
+                            <div class="usuario-info__rol">@TextoRol</div>
+                        </div>
+                        <MudMenu Icon="@Icons.Material.Filled.ExpandMore" Size="Size.Small" Dense="true"
+                                 AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight"
+                                 aria-label="Menú del usuario">
+                            <MudMenuItem Disabled="true">@Sesion.Usuario?.Correo</MudMenuItem>
+                            <MudMenuItem OnClick="CerrarSesionAsync">Cerrar sesión</MudMenuItem>
+                        </MudMenu>
+                    </div>
+                </ActivatorContent>
+                <ChildContent>
+                    <MudMenuItem Disabled="true">@Sesion.Usuario?.Correo</MudMenuItem>
+                    <MudMenuItem OnClick="CerrarSesionAsync">Cerrar sesión</MudMenuItem>
+                </ChildContent>
+            </MudMenu>
         }
-        <MudText Typo="Typo.h6" Class="ml-2 app-brand">Préstamos ITM</MudText>
-        <MudSpacer />
-        @if (Sesion.EstaAutenticado)
+        else
         {
-            <div class="d-flex flex-column align-end mr-3 usuario-info">
-                <MudText Typo="Typo.body2"><strong>@Sesion.Nombre</strong></MudText>
-                <MudText Typo="Typo.caption" Color="Color.Secondary">@TextoRol</MudText>
-            </div>
-            <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Logout"
-                       OnClick="CerrarSesionAsync">Salir</MudButton>
+            <MudText Typo="Typo.h6" Class="app-brand">Préstamos ITM</MudText>
         }
     </MudAppBar>
-
-    @if (Sesion.EstaAutenticado)
-    {
-        <MudDrawer @bind-Open="_menuAbierto" Variant="DrawerVariant.Responsive"
-                   ClipMode="DrawerClipMode.Always" Elevation="0">
-            <NavMenu />
-        </MudDrawer>
-    }
 
     <MudMainContent>
         <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="py-6">
@@ -40,6 +61,9 @@
 
 @code {
     private bool _menuAbierto = true;
+    private string? _busqueda;
+
+    private string Inicial => string.IsNullOrWhiteSpace(Sesion.Nombre) ? "?" : Sesion.Nombre[..1].ToUpperInvariant();
 
     private string TextoRol => Sesion.Rol switch
     {
@@ -50,9 +74,40 @@
         _ => Sesion.Rol
     };
 
-    protected override void OnInitialized() => Sesion.Cambio += Refrescar;
+    // Título de la vista actual según la ruta
+    private string Titulo
+    {
+        get
+        {
+            var ruta = Nav.ToBaseRelativePath(Nav.Uri).Split('?')[0].ToLowerInvariant();
+            if (ruta == "") return "Inicio";
+            if (ruta.StartsWith("catalogo")) return "Catálogo";
+            if (ruta.StartsWith("solicitudes/")) return "Detalle de solicitud";
+            if (ruta.StartsWith("solicitudes")) return Sesion.EsRol("Solicitante") ? "Mis solicitudes" : "Solicitudes";
+            if (ruta.StartsWith("tecnico/bandeja")) return "Bandeja del técnico";
+            if (ruta.StartsWith("tecnico/prorrogas")) return "Prórrogas";
+            if (ruta.StartsWith("coordinacion")) return "Panel consolidado";
+            if (ruta.StartsWith("admin/usuarios")) return "Usuarios";
+            if (ruta.StartsWith("admin/recursos")) return "Recursos y categorías";
+            return "Préstamos ITM";
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        Sesion.Cambio += Refrescar;
+        Nav.LocationChanged += AlCambiarRuta;
+    }
 
     private void AlternarMenu() => _menuAbierto = !_menuAbierto;
+
+    // Buscador rápido: Enter lleva al catálogo filtrado
+    private void Buscar(KeyboardEventArgs e)
+    {
+        if (e.Key != "Enter") return;
+        var q = _busqueda?.Trim();
+        Nav.NavigateTo(string.IsNullOrEmpty(q) ? "catalogo" : $"catalogo?q={Uri.EscapeDataString(q)}");
+    }
 
     private async Task CerrarSesionAsync()
     {
@@ -60,7 +115,12 @@
         Nav.NavigateTo("login");
     }
 
+    private void AlCambiarRuta(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e) => Refrescar();
     private void Refrescar() => InvokeAsync(StateHasChanged);
 
-    public void Dispose() => Sesion.Cambio -= Refrescar;
+    public void Dispose()
+    {
+        Sesion.Cambio -= Refrescar;
+        Nav.LocationChanged -= AlCambiarRuta;
+    }
 }
