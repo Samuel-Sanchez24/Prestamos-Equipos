@@ -1,0 +1,253 @@
+﻿@page "/coordinacion"
+@inject ApiCliente Api
+@inject SesionUsuario Sesion
+
+<PageTitle>Panel consolidado · Préstamos ITM</PageTitle>
+
+<Protegida Roles="Coordinacion,Tecnico">
+    <MudText Color="Color.Secondary" Class="mb-4">Supervisión del uso de los recursos y los préstamos (CA-06).</MudText>
+
+    @* ---------- Filtros ---------- *@
+    <MudPaper Class="pa-4 mb-4" Elevation="1">
+        <MudGrid Spacing="2">
+            <MudItem xs="12" sm="6" md="3">
+                <MudTextField T="string" @bind-Value="_desde" Label="Desde" InputType="InputType.Date" Variant="Variant.Outlined" ShrinkLabel="true" Immediate="true" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudTextField T="string" @bind-Value="_hasta" Label="Hasta" InputType="InputType.Date" Variant="Variant.Outlined" ShrinkLabel="true" Immediate="true" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudSelect T="int" @bind-Value="_categoriaId" Label="Categoría" Variant="Variant.Outlined" ShrinkLabel="true">
+                    <MudSelectItem T="int" Value="0">Todas</MudSelectItem>
+                    @foreach (var c in _categorias)
+                    {
+                        <MudSelectItem T="int" Value="@c.Id">@c.Nombre</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3" Class="d-flex align-center gap-2">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CargarAsync"
+                           StartIcon="@Icons.Material.Filled.FilterList">Aplicar</MudButton>
+                <MudButton Variant="Variant.Text" OnClick="LimpiarAsync">Limpiar</MudButton>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    <AlertaError Problema="_error" />
+    @if (_cargando)
+    {
+        <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mb-2" />
+    }
+
+    @if (_resumen is not null)
+    {
+        @* ---------- Indicadores ---------- *@
+        <MudGrid Class="mb-2">
+            @Indicador("Solicitudes", _resumen.TotalSolicitudes, Color.Default, Icons.Material.Filled.Assignment)
+            @Indicador("Préstamos activos", _resumen.PrestamosActivos, Color.Primary, Icons.Material.Filled.Outbox)
+            @Indicador("Préstamos vencidos", _resumen.PrestamosVencidos, Color.Error, Icons.Material.Filled.WarningAmber)
+            @Indicador("Recursos prestados ahora", _resumen.RecursosPrestadosAhora, Color.Info, Icons.Material.Filled.Inventory2)
+        </MudGrid>
+
+        <MudGrid Class="mb-4">
+            <MudItem xs="12" md="4">
+                <MudPaper Class="pa-4" Elevation="1">
+                    <MudText Typo="Typo.h6" Class="mb-2">Solicitudes por estado</MudText>
+                    <MudSimpleTable Dense="true">
+                        <tbody>
+                            @foreach (var (estado, total) in _resumen.SolicitudesPorEstado)
+                            {
+                                <tr><td><EstadoChip Estado="@estado" /></td><td style="text-align: right;"><strong>@total</strong></td></tr>
+                            }
+                        </tbody>
+                    </MudSimpleTable>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudPaper Class="pa-4" Elevation="1">
+                    <MudText Typo="Typo.h6" Class="mb-2">Recursos por estado (@_resumen.TotalRecursos)</MudText>
+                    <MudSimpleTable Dense="true">
+                        <tbody>
+                            @foreach (var (estado, total) in _resumen.RecursosPorEstado)
+                            {
+                                <tr><td><EstadoChip Estado="@estado" /></td><td style="text-align: right;"><strong>@total</strong></td></tr>
+                            }
+                        </tbody>
+                    </MudSimpleTable>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudPaper Class="pa-4" Elevation="1">
+                    <MudText Typo="Typo.h6" Class="mb-2">Recursos más utilizados</MudText>
+                    @if (_resumen.RecursosMasUtilizados.Count == 0)
+                    {
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Sin préstamos en el período.</MudText>
+                    }
+                    else
+                    {
+                        <MudSimpleTable Dense="true">
+                            <tbody>
+                                @foreach (var u in _resumen.RecursosMasUtilizados)
+                                {
+                                    <tr>
+                                        <td><span class="mono">@u.Codigo</span> · @u.Nombre</td>
+                                        <td style="text-align: right;">@u.Prestamos</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </MudSimpleTable>
+                    }
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    }
+
+    @* ---------- Préstamos con responsables ---------- *@
+    <MudPaper Class="pa-4" Elevation="1">
+        <div class="d-flex align-center justify-space-between flex-wrap gap-2 mb-2">
+            <MudText Typo="Typo.h6">Préstamos y responsables</MudText>
+            <MudSelect T="string" Value="_estadoPrestamo" ValueChanged="CambiarEstadoPrestamoAsync" Label="Estado del préstamo"
+                       Variant="Variant.Outlined" ShrinkLabel="true" Margin="Margin.Dense" Style="max-width: 220px">
+                <MudSelectItem T="string" Value="@string.Empty">Todos</MudSelectItem>
+                <MudSelectItem T="string" Value="@("Activo")">Activos</MudSelectItem>
+                <MudSelectItem T="string" Value="@("Vencido")">Vencidos</MudSelectItem>
+                <MudSelectItem T="string" Value="@("Devuelto")">Devueltos</MudSelectItem>
+            </MudSelect>
+        </div>
+        <MudSimpleTable Hover="true" Dense="true">
+            <thead>
+                <tr>
+                    <th>Solicitud</th>
+                    <th>Recurso</th>
+                    <th>Solicitante</th>
+                    <th>Período</th>
+                    <th>Entregó</th>
+                    <th>Devolución</th>
+                    <th>Recibió</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (_prestamos.Count == 0)
+                {
+                    <tr><td colspan="8" class="text-center pa-4">No hay préstamos con este filtro.</td></tr>
+                }
+                @foreach (var p in _prestamos)
+                {
+                    <tr>
+                        <td><MudLink Href="@($"solicitudes/{p.SolicitudId}")" Class="mono">#@p.SolicitudId</MudLink></td>
+                        <td><span class="mono">@p.RecursoCodigo</span> · @p.RecursoNombre<div class="mud-text-secondary text-small">@p.Categoria</div></td>
+                        <td>@p.Solicitante <span class="mud-text-secondary">(@p.TipoSolicitante)</span></td>
+                        <td class="mono">@Formato.Corta(p.FechaInicio) – @Formato.Corta(p.FechaFin)</td>
+                        <td>@(p.EntregadoPor ?? "—")<div class="mud-text-secondary text-small">@Formato.Corta(p.FechaEntrega)</div></td>
+                        <td>
+                            <span class="mono">@Formato.Corta(p.FechaDevolucion)</span>
+                            @if (p.DevueltoConDano)
+                            {
+                                <EstadoChip Estado="Danado" />
+                            }
+                        </td>
+                        <td>@(p.RecibidoPor ?? "—")</td>
+                        <td>
+                            <EstadoChip Estado="@p.Estado" />
+                            @if (p.DiasRetraso > 0)
+                            {
+                                <div class="mud-error-text text-small">@p.DiasRetraso día(s) de retraso</div>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </MudSimpleTable>
+    </MudPaper>
+</Protegida>
+
+@code {
+    private List<CategoriaResponse> _categorias = [];
+    private ResumenResponse? _resumen;
+    private List<PrestamoReporteResponse> _prestamos = [];
+
+    private string? _desde;
+    private string? _hasta;
+    private int _categoriaId;
+    private string _estadoPrestamo = string.Empty;
+
+    private bool _cargando;
+    private Problema? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!Sesion.EsRol("Coordinacion", "Tecnico")) return;
+
+        var c = await Api.GetAsync<List<CategoriaResponse>>("api/categorias");
+        if (c.Exito) _categorias = c.Datos ?? [];
+
+        await CargarAsync();
+    }
+
+    private string Filtros()
+    {
+        var q = new List<string>();
+        var desde = Formato.LeerFecha(_desde);
+        var hasta = Formato.LeerFecha(_hasta);
+        if (desde is not null && hasta is not null)
+        {
+            q.Add($"desde={Formato.Iso(desde.Value)}");
+            q.Add($"hasta={Formato.Iso(hasta.Value)}");
+        }
+        if (_categoriaId > 0) q.Add($"categoriaId={_categoriaId}");
+        return string.Join("&", q);
+    }
+
+    private async Task CargarAsync()
+    {
+        _cargando = true;
+        _error = null;
+
+        var filtros = Filtros();
+        var resumen = await Api.GetAsync<ResumenResponse>($"api/reportes/resumen?{filtros}");
+        if (resumen.Exito) _resumen = resumen.Datos;
+        else _error = resumen.Problema;
+
+        await CargarPrestamosAsync(filtros);
+        _cargando = false;
+    }
+
+    private async Task CargarPrestamosAsync(string filtros)
+    {
+        var url = $"api/reportes/prestamos?{filtros}";
+        if (!string.IsNullOrWhiteSpace(_estadoPrestamo)) url += $"&estado={_estadoPrestamo}";
+
+        var r = await Api.GetAsync<List<PrestamoReporteResponse>>(url);
+        if (r.Exito) _prestamos = r.Datos ?? [];
+        else _error = r.Problema;
+    }
+
+    private async Task CambiarEstadoPrestamoAsync(string estado)
+    {
+        _estadoPrestamo = estado;
+        await CargarPrestamosAsync(Filtros());
+    }
+
+    private async Task LimpiarAsync()
+    {
+        _desde = null;
+        _hasta = null;
+        _categoriaId = 0;
+        _estadoPrestamo = string.Empty;
+        await CargarAsync();
+    }
+
+    private static RenderFragment Indicador(string titulo, int valor, Color color, string icono) => __builder =>
+    {
+        <MudItem xs="12" sm="6" md="3">
+            <MudPaper Class="pa-4" Elevation="1">
+                <div class="d-flex align-center justify-space-between mb-2">
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">@titulo</MudText>
+                    <MudIcon Icon="@icono" Color="@color" Size="Size.Small" />
+                </div>
+                <div class="kpi-valor">@valor</div>
+            </MudPaper>
+        </MudItem>
+    };
+}
