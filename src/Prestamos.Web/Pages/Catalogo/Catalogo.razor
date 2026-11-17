@@ -1,0 +1,406 @@
+﻿@page "/catalogo"
+@inject ApiCliente Api
+@inject SesionUsuario Sesion
+@inject NavigationManager Nav
+@inject ISnackbar Snackbar
+
+<PageTitle>Catálogo · Préstamos ITM</PageTitle>
+
+<Protegida>
+    <MudText Color="Color.Secondary" Class="mb-4">
+        Consulta la disponibilidad en un rango de fechas (CA-01).
+        @if (EsSolicitante)
+        {
+            <span>Selecciona los equipos que necesitas y envía tu solicitud.</span>
+        }
+    </MudText>
+
+    @* ---------- Filtros ---------- *@
+    <MudPaper Class="pa-4 mb-4" Elevation="1">
+        <MudGrid Spacing="2">
+            <MudItem xs="12" sm="6" md="3">
+                <MudTextField T="string" @bind-Value="_desde" Label="Desde" InputType="InputType.Date"
+                              Variant="Variant.Outlined" ShrinkLabel="true" Immediate="true" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudTextField T="string" @bind-Value="_hasta" Label="Hasta" InputType="InputType.Date"
+                              Variant="Variant.Outlined" ShrinkLabel="true" Immediate="true" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudSelect T="int" @bind-Value="_categoriaId" Label="Categoría" Variant="Variant.Outlined" ShrinkLabel="true">
+                    <MudSelectItem T="int" Value="0">Todas</MudSelectItem>
+                    @foreach (var c in _categorias)
+                    {
+                        <MudSelectItem T="int" Value="@c.Id">@c.Nombre</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3" Class="d-flex align-center gap-3">
+                <MudCheckBox T="bool" @bind-Value="_soloDisponibles" Label="Solo disponibles" Color="Color.Primary" />
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="BuscarAsync"
+                           StartIcon="@Icons.Material.Filled.Search">Buscar</MudButton>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    @if (!string.IsNullOrWhiteSpace(Q))
+    {
+        <MudText Typo="Typo.body2" Class="mb-3">
+            Resultados para "<strong>@Q</strong>" · <MudLink Href="catalogo">Quitar búsqueda</MudLink>
+        </MudText>
+    }
+
+    <AlertaError Problema="_error" />
+
+    @if (_cargando)
+    {
+        <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mb-2" />
+    }
+
+    @if (!_cargando && Visibles.Count == 0)
+    {
+        <MudPaper Class="pa-6 mb-4 text-center" Elevation="1">No hay recursos que coincidan con el filtro.</MudPaper>
+    }
+
+    @if (EsSolicitante)
+    {
+        @* ---------- Vista marketplace (solicitante) ---------- *@
+        <MudGrid Spacing="3" Class="mb-4">
+            @foreach (var r in Visibles)
+            {
+                var seleccionada = _seleccion.Contains(r.Id);
+                <MudItem xs="12" sm="6" md="4" lg="3">
+                    <MudPaper Elevation="1" tabindex="0" @onclick="() => AbrirDetalleAsync(r)"
+                              Class="@($"recurso-card {(seleccionada ? "recurso-card--seleccionada" : "")} {(r.DisponibleEnRango ? "" : "recurso-card--no-disponible")}")">
+                        <div class="recurso-card__imagen">
+                            <MudIcon Icon="@IconoCategoria(r.Categoria)" Style="font-size: 44px;" />
+                        </div>
+                        <div class="d-flex justify-space-between align-center">
+                            <span class="mono mud-text-secondary">@r.Codigo</span>
+                            @if (r.DisponibleEnRango)
+                            {
+                                <EstadoChip Estado="Disponible" />
+                            }
+                            else
+                            {
+                                <span class="estado estado--neutro">No disponible</span>
+                            }
+                        </div>
+                        <div class="recurso-card__nombre">@r.Nombre</div>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">@r.Categoria · @(r.Ubicacion ?? "Sin ubicación")</MudText>
+                        <MudSpacer />
+                        <div @onclick:stopPropagation="true">
+                            <MudButton Variant="@(seleccionada ? Variant.Filled : Variant.Outlined)" Color="Color.Primary"
+                                       FullWidth="true" Disabled="@(!r.DisponibleEnRango)"
+                                       OnClick="() => Alternar(r.Id, !seleccionada)">
+                                @(seleccionada ? "Seleccionado" : "Seleccionar")
+                            </MudButton>
+                        </div>
+                    </MudPaper>
+                </MudItem>
+            }
+        </MudGrid>
+
+        @* ---------- Barra de solicitud ---------- *@
+        <MudPaper Class="pa-4 barra-solicitud" Elevation="1">
+            <MudText Typo="Typo.h6" Class="mb-1">Nueva solicitud</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-3">
+                Equipos seleccionados: <strong>@_seleccion.Count</strong> ·
+                Período: <strong class="mono">@TextoPeriodo</strong>
+            </MudText>
+
+            <AlertaError Problema="_errorSolicitud" />
+
+            <MudTextField T="string" @bind-Value="_motivo" Label="Motivo (para qué necesitas los equipos)"
+                          Variant="Variant.Outlined" ShrinkLabel="true" Lines="2" Class="mb-3" Immediate="true"
+                          HelperText="Entre 10 y 300 caracteres" />
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Send"
+                       Disabled="@(_seleccion.Count == 0 || _enviando)" OnClick="SolicitarAsync">
+                @(_enviando ? "Enviando…" : "Enviar solicitud")
+            </MudButton>
+        </MudPaper>
+    }
+    else if (Visibles.Count > 0)
+    {
+        @* ---------- Vista operativa (técnico, coordinación, administrador) ---------- *@
+        <MudPaper Elevation="1">
+            <MudSimpleTable Hover="true" Dense="true">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Recurso</th>
+                        <th>Categoría</th>
+                        <th>Ubicación</th>
+                        <th>Estado</th>
+                        <th>En las fechas</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var r in Visibles)
+                    {
+                        <tr>
+                            <td class="mono">@r.Codigo</td>
+                            <td>@r.Nombre</td>
+                            <td>@r.Categoria</td>
+                            <td>@(r.Ubicacion ?? "—")</td>
+                            <td><EstadoChip Estado="@r.EstadoOperativo" /></td>
+                            <td>
+                                @if (r.DisponibleEnRango)
+                                {
+                                    <EstadoChip Estado="Disponible" />
+                                }
+                                else
+                                {
+                                    <span class="estado estado--neutro">No disponible</span>
+                                }
+                            </td>
+                            <td style="text-align: right;">
+                                <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Primary"
+                                           OnClick="() => AbrirDetalleAsync(r)">Ver detalle</MudButton>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </MudSimpleTable>
+        </MudPaper>
+    }
+
+    @* ---------- Slide-over: detalle del equipo ---------- *@
+    <MudDrawer @bind-Open="_detalleAbierto" Anchor="Anchor.End" Variant="DrawerVariant.Temporary"
+               Width="420px" Elevation="2" Overlay="true">
+        @if (_actual is not null)
+        {
+            <MudDrawerHeader Class="d-flex align-center justify-space-between">
+                <div>
+                    <div class="mono mud-text-secondary">@_actual.Codigo</div>
+                    <MudText Typo="Typo.h6">@_actual.Nombre</MudText>
+                </div>
+                <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="() => _detalleAbierto = false" aria-label="Cerrar" />
+            </MudDrawerHeader>
+            <div class="slide-over__contenido">
+                <div class="slide-over__fila"><span>Estado</span><EstadoChip Estado="@_actual.EstadoOperativo" /></div>
+                <div class="slide-over__fila"><span>Categoría</span><span>@_actual.Categoria</span></div>
+                <div class="slide-over__fila"><span>Ubicación</span><span>@(_actual.Ubicacion ?? "—")</span></div>
+                @if (!string.IsNullOrWhiteSpace(_actual.Descripcion))
+                {
+                    <MudText Typo="Typo.body2">@_actual.Descripcion</MudText>
+                }
+
+                <MudDivider />
+                <MudText Typo="Typo.subtitle2">Próximas reservas</MudText>
+                @if (_detalle is null)
+                {
+                    <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+                }
+                else if (_detalle.ProximasReservas.Count == 0)
+                {
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Sin reservas próximas.</MudText>
+                }
+                else
+                {
+                    @foreach (var res in _detalle.ProximasReservas)
+                    {
+                        <div class="slide-over__fila">
+                            <span class="mono">@Formato.Corta(res.FechaInicio) – @Formato.Corta(res.FechaFin)</span>
+                            <EstadoChip Estado="@res.Estado" />
+                        </div>
+                    }
+                }
+
+                <MudDivider />
+                @if (EsSolicitante)
+                {
+                    var sel = _seleccion.Contains(_actual.Id);
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                               Disabled="@(!_actual.DisponibleEnRango)"
+                               OnClick="() => { Alternar(_actual.Id, !sel); _detalleAbierto = false; }">
+                        @(sel ? "Quitar de la solicitud" : "Agregar a la solicitud")
+                    </MudButton>
+                }
+                @if (Sesion.EsRol("Tecnico") && _actual.EstadoOperativo == "Disponible")
+                {
+                    <MudButton Variant="Variant.Filled" Color="Color.Error" FullWidth="true"
+                               OnClick="() => CambiarEstadoAsync(_actual, Danado)">Reportar daño</MudButton>
+                }
+                @if (Sesion.EsRol("Tecnico") && _actual.EstadoOperativo == Danado)
+                {
+                    <MudButton Variant="Variant.Filled" Color="Color.Success" FullWidth="true"
+                               OnClick="() => CambiarEstadoAsync(_actual, Disponible)">Marcar reparado</MudButton>
+                }
+                @if (Sesion.EsRol("Administrador") && _actual.EstadoOperativo != "DadoDeBaja")
+                {
+                    <MudButton Variant="Variant.Outlined" Color="Color.Error" FullWidth="true"
+                               OnClick="() => CambiarEstadoAsync(_actual, DadoDeBaja)">Dar de baja</MudButton>
+                }
+            </div>
+        }
+    </MudDrawer>
+</Protegida>
+
+@code {
+    private const string Disponible = "Disponible";
+    private const string Danado = "Danado";
+    private const string DadoDeBaja = "DadoDeBaja";
+
+    /// <summary>Texto del buscador rápido del header.</summary>
+    [SupplyParameterFromQuery] public string? Q { get; set; }
+
+    private List<CategoriaResponse> _categorias = [];
+    private List<RecursoResponse> _recursos = [];
+    private readonly HashSet<int> _seleccion = [];
+
+    private string? _desde = Formato.Iso(Formato.Hoy.AddDays(1));
+    private string? _hasta = Formato.Iso(Formato.Hoy.AddDays(3));
+    private int _categoriaId;
+    private bool _soloDisponibles;
+    private string? _motivo;
+
+    // Fechas con las que se hizo la última búsqueda (son las que se envían en la solicitud)
+    private DateOnly? _desdeBuscado;
+    private DateOnly? _hastaBuscado;
+
+    private bool _cargando;
+    private bool _enviando;
+    private Problema? _error;
+    private Problema? _errorSolicitud;
+
+    // Slide-over
+    private bool _detalleAbierto;
+    private RecursoResponse? _actual;
+    private RecursoDetalleResponse? _detalle;
+
+    private bool EsSolicitante => Sesion.EsRol("Solicitante");
+
+    private List<RecursoResponse> Visibles => string.IsNullOrWhiteSpace(Q)
+        ? _recursos
+        : _recursos.Where(r =>
+                r.Codigo.Contains(Q, StringComparison.OrdinalIgnoreCase) ||
+                r.Nombre.Contains(Q, StringComparison.OrdinalIgnoreCase) ||
+                r.Categoria.Contains(Q, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+    private string TextoPeriodo => _desdeBuscado is null || _hastaBuscado is null
+        ? "sin definir"
+        : $"{Formato.Corta(_desdeBuscado.Value)} a {Formato.Corta(_hastaBuscado.Value)}";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!Sesion.EstaAutenticado) return;
+
+        var categorias = await Api.GetAsync<List<CategoriaResponse>>("api/categorias");
+        if (categorias.Exito) _categorias = categorias.Datos ?? [];
+
+        await BuscarAsync();
+    }
+
+    private static string IconoCategoria(string categoria) => categoria switch
+    {
+        var c when c.StartsWith("Port", StringComparison.OrdinalIgnoreCase) => Icons.Material.Filled.Laptop,
+        var c when c.StartsWith("Cám", StringComparison.OrdinalIgnoreCase) => Icons.Material.Filled.PhotoCamera,
+        var c when c.StartsWith("Instr", StringComparison.OrdinalIgnoreCase) => Icons.Material.Filled.Science,
+        var c when c.StartsWith("Audio", StringComparison.OrdinalIgnoreCase) => Icons.Material.Filled.Videocam,
+        _ => Icons.Material.Filled.Devices
+    };
+
+    private async Task BuscarAsync()
+    {
+        _error = null;
+        var desde = Formato.LeerFecha(_desde);
+        var hasta = Formato.LeerFecha(_hasta);
+
+        var url = "api/recursos?";
+        if (desde is not null && hasta is not null)
+            url += $"desde={Formato.Iso(desde.Value)}&hasta={Formato.Iso(hasta.Value)}&";
+        if (_categoriaId > 0)
+            url += $"categoriaId={_categoriaId}&";
+        if (_soloDisponibles)
+            url += "soloDisponibles=true&";
+
+        _cargando = true;
+        var r = await Api.GetAsync<List<RecursoResponse>>(url.TrimEnd('&', '?'));
+        _cargando = false;
+
+        if (!r.Exito)
+        {
+            _error = r.Problema;
+            _recursos = [];
+            return;
+        }
+
+        _recursos = r.Datos ?? [];
+        _desdeBuscado = desde;
+        _hastaBuscado = hasta;
+
+        // Quita de la selección lo que ya no está disponible en el nuevo rango
+        _seleccion.RemoveWhere(id => !_recursos.Any(x => x.Id == id && x.DisponibleEnRango));
+    }
+
+    private void Alternar(int id, bool seleccionado)
+    {
+        if (seleccionado) _seleccion.Add(id);
+        else _seleccion.Remove(id);
+    }
+
+    private async Task AbrirDetalleAsync(RecursoResponse recurso)
+    {
+        _actual = recurso;
+        _detalle = null;
+        _detalleAbierto = true;
+
+        var r = await Api.GetAsync<RecursoDetalleResponse>($"api/recursos/{recurso.Id}");
+        _detalle = r.Exito ? r.Datos : new RecursoDetalleResponse();
+    }
+
+    private async Task SolicitarAsync()
+    {
+        _errorSolicitud = null;
+        if (_desdeBuscado is null || _hastaBuscado is null)
+        {
+            _errorSolicitud = new Problema { Titulo = "Indica las fechas", Detalle = "Elige 'Desde' y 'Hasta' y pulsa Buscar antes de solicitar." };
+            return;
+        }
+
+        var solicitud = new CrearSolicitudRequest
+        {
+            RecursoIds = _seleccion.ToList(),
+            FechaInicio = _desdeBuscado.Value,
+            FechaFin = _hastaBuscado.Value,
+            Motivo = _motivo ?? string.Empty
+        };
+
+        _enviando = true;
+        var r = await Api.PostAsync<SolicitudResponse>("api/solicitudes", solicitud);
+        _enviando = false;
+
+        if (!r.Exito || r.Datos is null)
+        {
+            _errorSolicitud = r.Problema;
+            return;
+        }
+
+        Snackbar.Add($"Solicitud #{r.Datos.Id} registrada. Queda pendiente de aprobación.", Severity.Success);
+        Nav.NavigateTo($"solicitudes/{r.Datos.Id}");
+    }
+
+    private async Task CambiarEstadoAsync(RecursoResponse recurso, string estado)
+    {
+        var r = await Api.PatchAsync<CambioEstadoRecursoResponse>($"api/recursos/{recurso.Id}/estado",
+            new CambiarEstadoRecursoRequest { Estado = estado });
+
+        if (!r.Exito)
+        {
+            Snackbar.Add(r.Problema?.Mensaje ?? "No se pudo cambiar el estado.", Severity.Error);
+            return;
+        }
+
+        var afectadas = r.Datos?.ReservasAfectadas.Count ?? 0;
+        Snackbar.Add(afectadas > 0
+                ? $"{recurso.Codigo} actualizado. Atención: tiene {afectadas} reserva(s) pendiente(s) o aprobada(s) afectada(s)."
+                : $"{recurso.Codigo} actualizado.",
+            afectadas > 0 ? Severity.Warning : Severity.Success);
+
+        _detalleAbierto = false;
+        await BuscarAsync();
+    }
+}
