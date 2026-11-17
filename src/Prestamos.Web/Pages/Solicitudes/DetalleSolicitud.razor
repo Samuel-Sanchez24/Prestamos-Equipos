@@ -1,0 +1,341 @@
+﻿@page "/solicitudes/{Id:int}"
+@inject ApiCliente Api
+@inject SesionUsuario Sesion
+@inject ISnackbar Snackbar
+
+<PageTitle>Solicitud #@Id · Préstamos ITM</PageTitle>
+
+<Protegida>
+    <MudButton Href="@(Sesion.EsRol("Tecnico") ? "tecnico/bandeja" : "solicitudes")" Variant="Variant.Text"
+               StartIcon="@Icons.Material.Filled.ArrowBack" Class="mb-2">Volver</MudButton>
+
+    <AlertaError Problema="_error" />
+
+    @if (_s is null)
+    {
+        @if (_error is null)
+        {
+            <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+        }
+    }
+    else
+    {
+        <div class="d-flex align-center flex-wrap gap-2 mb-4">
+            <h1 class="mud-typography mud-typography-h5 mr-2">Solicitud <span class="mono">#@_s.Id</span></h1>
+            <EstadoChip Estado="@_s.Estado" />
+            @if (_s.Vencida)
+            {
+                <EstadoChip Estado="Vencida" />
+            }
+        </div>
+
+        <MudGrid>
+            @* ---------- Datos generales ---------- *@
+            <MudItem xs="12" md="7">
+                <MudPaper Class="pa-4" Elevation="1">
+                    <MudText Typo="Typo.h6" Class="mb-3">Datos de la solicitud</MudText>
+                    <MudSimpleTable Dense="true">
+                        <tbody>
+                            <tr><th>Solicitante</th><td>@_s.Solicitante (@_s.TipoSolicitante)</td></tr>
+                            <tr><th>Período</th><td class="mono">@Formato.Corta(_s.FechaInicio) al @Formato.Corta(_s.FechaFin)</td></tr>
+                            <tr><th>Motivo</th><td>@_s.Motivo</td></tr>
+                            <tr><th>Registrada</th><td class="mono">@Formato.Corta(_s.FechaRegistro)</td></tr>
+                            <tr><th>Evaluada por</th><td>@(_s.EvaluadaPor ?? "—") · @Formato.Corta(_s.FechaEvaluacion)</td></tr>
+                            @if (!string.IsNullOrWhiteSpace(_s.MotivoRechazo))
+                            {
+                                <tr><th>Motivo del rechazo</th><td>@_s.MotivoRechazo</td></tr>
+                            }
+                            <tr><th>Entregada por</th><td>@(_s.EntregadaPor ?? "—") · @Formato.Corta(_s.FechaEntrega)</td></tr>
+                        </tbody>
+                    </MudSimpleTable>
+                </MudPaper>
+            </MudItem>
+
+            @* ---------- Acciones según rol y estado ---------- *@
+            <MudItem xs="12" md="5">
+                <MudPaper Class="pa-4" Elevation="1">
+                    <MudText Typo="Typo.h6" Class="mb-3">Acciones</MudText>
+                    <AlertaError Problema="_errorAccion" />
+
+                    @if (EsDueno && _s.Estado is "Pendiente" or "Aprobada")
+                    {
+                        <MudButton Variant="Variant.Outlined" Color="Color.Error" FullWidth="true" Class="mb-2"
+                                   Disabled="_procesando" OnClick="@(() => AccionAsync($"api/solicitudes/{Id}/cancelar", null, "Solicitud cancelada."))">
+                            Cancelar solicitud
+                        </MudButton>
+                    }
+
+                    @if (EsDueno && _s.Estado == "Entregada" && !TieneProrrogaPendiente)
+                    {
+                        <MudText Typo="Typo.subtitle2" Class="mb-2">Pedir prórroga (RF-14)</MudText>
+                        <MudTextField T="string" @bind-Value="_nuevaFechaFin" Label="Nueva fecha de fin" InputType="InputType.Date"
+                                      Variant="Variant.Outlined" ShrinkLabel="true" Immediate="true" Class="mb-2" />
+                        <MudTextField T="string" @bind-Value="_motivoProrroga" Label="Motivo" Variant="Variant.Outlined" ShrinkLabel="true" Immediate="true" Class="mb-2" />
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Disabled="_procesando" OnClick="PedirProrrogaAsync">
+                            Pedir prórroga
+                        </MudButton>
+                    }
+
+                    @if (EsTecnico && _s.Estado == "Pendiente")
+                    {
+                        <MudButton Variant="Variant.Filled" Color="Color.Success" FullWidth="true" Class="mb-3"
+                                   Disabled="_procesando" OnClick="@(() => AccionAsync($"api/solicitudes/{Id}/aprobar", null, "Solicitud aprobada."))">
+                            Aprobar
+                        </MudButton>
+                        <MudTextField T="string" @bind-Value="_motivoRechazo" Label="Motivo del rechazo" Variant="Variant.Outlined" ShrinkLabel="true" Immediate="true" Class="mb-2" />
+                        <MudButton Variant="Variant.Outlined" Color="Color.Error" FullWidth="true" Disabled="_procesando"
+                                   OnClick="@(() => AccionAsync($"api/solicitudes/{Id}/rechazar", new RechazarSolicitudRequest { Motivo = _motivoRechazo ?? string.Empty }, "Solicitud rechazada."))">
+                            Rechazar
+                        </MudButton>
+                    }
+
+                    @if (EsTecnico && _s.Estado == "Aprobada")
+                    {
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Class="mb-2"
+                                   Disabled="_procesando" OnClick="@(() => AccionAsync($"api/solicitudes/{Id}/entregar", null, "Recursos entregados."))">
+                            Registrar entrega
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" FullWidth="true"
+                                   Disabled="_procesando" OnClick="@(() => AccionAsync($"api/solicitudes/{Id}/no-recogida", null, "Marcada como no recogida."))">
+                            Marcar como no recogida
+                        </MudButton>
+                    }
+
+                    @if (!HayAcciones)
+                    {
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">No hay acciones disponibles para ti en este estado.</MudText>
+                    }
+                </MudPaper>
+            </MudItem>
+
+            @* ---------- Recursos y devoluciones ---------- *@
+            <MudItem xs="12">
+                <MudPaper Class="pa-4" Elevation="1">
+                    <MudText Typo="Typo.h6" Class="mb-3">Recursos</MudText>
+                    <MudSimpleTable Dense="true" Hover="true">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Recurso</th>
+                                <th>Devolución</th>
+                                <th>Recibido por</th>
+                                <th>Observación</th>
+                                @if (PuedeDevolver)
+                                {
+                                    <th>Registrar devolución (RF-16)</th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var d in _s.Recursos)
+                            {
+                                var form = Formulario(d.RecursoId);
+                                <tr>
+                                    <td class="mono">@d.Codigo</td>
+                                    <td>@d.Nombre</td>
+                                    <td>
+                                        @if (d.FechaDevolucion is null)
+                                        {
+                                            <span class="mud-text-secondary">Sin devolver</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="mono">@Formato.Corta(d.FechaDevolucion)</span>
+                                            @if (d.DevueltoConDano)
+                                            {
+                                                <EstadoChip Estado="Danado" />
+                                            }
+                                        }
+                                    </td>
+                                    <td>@(d.RecibidoPor ?? "—")</td>
+                                    <td>@(d.ObservacionDevolucion ?? "—")</td>
+                                    @if (PuedeDevolver)
+                                    {
+                                        <td style="min-width: 300px">
+                                            @if (d.FechaDevolucion is null)
+                                            {
+                                                <div class="d-flex align-center gap-2 flex-wrap">
+                                                    <MudCheckBox T="bool" @bind-Value="form.ConDano" Label="Con daño" Color="Color.Error" Dense="true" />
+                                                    <MudTextField T="string" @bind-Value="form.Observacion" Placeholder="Observación" Margin="Margin.Dense"
+                                                                  Variant="Variant.Outlined" Immediate="true" Style="max-width: 200px" />
+                                                    <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" Disabled="_procesando"
+                                                               OnClick="@(() => DevolverAsync(d.RecursoId))">Devolver</MudButton>
+                                                </div>
+                                            }
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                    </MudSimpleTable>
+                </MudPaper>
+            </MudItem>
+
+            @* ---------- Prórrogas ---------- *@
+            @if (_s.Prorrogas.Count > 0)
+            {
+                <MudItem xs="12" md="6">
+                    <MudPaper Class="pa-4" Elevation="1">
+                        <MudText Typo="Typo.h6" Class="mb-3">Prórrogas</MudText>
+                        <MudSimpleTable Dense="true">
+                            <thead><tr><th>#</th><th>De → a</th><th>Motivo</th><th>Estado</th></tr></thead>
+                            <tbody>
+                                @foreach (var p in _s.Prorrogas)
+                                {
+                                    <tr>
+                                        <td class="mono">#@p.Id</td>
+                                        <td class="mono">@Formato.Corta(p.FechaFinAnterior) → @Formato.Corta(p.FechaFinSolicitada)</td>
+                                        <td>
+                                            @p.Motivo
+                                            @if (!string.IsNullOrWhiteSpace(p.MotivoRechazo))
+                                            {
+                                                <div class="mud-error-text text-small">Rechazo: @p.MotivoRechazo</div>
+                                            }
+                                        </td>
+                                        <td><EstadoChip Estado="@p.Estado" /></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </MudSimpleTable>
+                    </MudPaper>
+                </MudItem>
+            }
+
+            @* ---------- Historial (RF-19) ---------- *@
+            <MudItem xs="12" md="@(_s.Prorrogas.Count > 0 ? 6 : 12)">
+                <MudPaper Class="pa-4" Elevation="1">
+                    <MudText Typo="Typo.h6" Class="mb-3">Historial</MudText>
+                    @if (_movimientos.Count == 0)
+                    {
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Sin movimientos registrados.</MudText>
+                    }
+                    else
+                    {
+                        <MudSimpleTable Dense="true">
+                            <thead><tr><th>Fecha</th><th>Cambio</th><th>Usuario</th><th>Observación</th></tr></thead>
+                            <tbody>
+                                @foreach (var m in _movimientos)
+                                {
+                                    <tr>
+                                        <td class="mono">@Formato.Corta(m.Fecha)</td>
+                                        <td>@(m.EstadoAnterior ?? "—") → <strong>@m.EstadoNuevo</strong></td>
+                                        <td>@m.Usuario</td>
+                                        <td>@(m.Observacion ?? "—")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </MudSimpleTable>
+                    }
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    }
+</Protegida>
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private class FormularioDevolucion
+    {
+        public bool ConDano { get; set; }
+        public string? Observacion { get; set; }
+    }
+
+    private SolicitudResponse? _s;
+    private List<MovimientoResponse> _movimientos = [];
+    private readonly Dictionary<int, FormularioDevolucion> _devoluciones = [];
+
+    private string? _motivoRechazo;
+    private string? _nuevaFechaFin;
+    private string? _motivoProrroga;
+
+    private bool _procesando;
+    private Problema? _error;
+    private Problema? _errorAccion;
+
+    private bool EsTecnico => Sesion.EsRol("Tecnico");
+    private bool EsDueno => Sesion.EsRol("Solicitante") && _s?.SolicitanteId == Sesion.UsuarioId;
+    private bool PuedeDevolver => EsTecnico && _s?.Estado == "Entregada";
+    private bool TieneProrrogaPendiente => _s?.Prorrogas.Any(p => p.Estado == "Pendiente") ?? false;
+
+    private bool HayAcciones => _s is not null && (
+        (EsDueno && _s.Estado is "Pendiente" or "Aprobada") ||
+        (EsDueno && _s.Estado == "Entregada" && !TieneProrrogaPendiente) ||
+        (EsTecnico && _s.Estado is "Pendiente" or "Aprobada"));
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Sesion.EstaAutenticado) await CargarAsync();
+    }
+
+    private FormularioDevolucion Formulario(int recursoId)
+    {
+        if (!_devoluciones.TryGetValue(recursoId, out var form))
+        {
+            form = new FormularioDevolucion();
+            _devoluciones[recursoId] = form;
+        }
+        return form;
+    }
+
+    private async Task CargarAsync()
+    {
+        var r = await Api.GetAsync<SolicitudResponse>($"api/solicitudes/{Id}");
+        if (!r.Exito)
+        {
+            _error = r.Problema;
+            return;
+        }
+        _error = null;
+        _s = r.Datos;
+
+        var m = await Api.GetAsync<List<MovimientoResponse>>($"api/solicitudes/{Id}/movimientos");
+        _movimientos = m.Exito ? m.Datos ?? [] : [];
+
+        if (_s is not null && _nuevaFechaFin is null)
+            _nuevaFechaFin = Formato.Iso(_s.FechaFin.AddDays(7));
+    }
+
+    private async Task AccionAsync(string url, object? cuerpo, string mensajeExito)
+    {
+        _procesando = true;
+        _errorAccion = null;
+
+        var r = await Api.PostAsync<object>(url, cuerpo);
+        _procesando = false;
+
+        if (!r.Exito)
+        {
+            _errorAccion = r.Problema;
+            return;
+        }
+
+        Snackbar.Add(mensajeExito, Severity.Success);
+        _motivoRechazo = null;
+        await CargarAsync();
+    }
+
+    private async Task PedirProrrogaAsync()
+    {
+        var fecha = Formato.LeerFecha(_nuevaFechaFin);
+        if (fecha is null)
+        {
+            _errorAccion = new Problema { Titulo = "Indica la nueva fecha de fin." };
+            return;
+        }
+
+        await AccionAsync($"api/solicitudes/{Id}/prorrogas",
+            new SolicitarProrrogaRequest { NuevaFechaFin = fecha.Value, Motivo = _motivoProrroga ?? string.Empty },
+            "Prórroga solicitada. Queda pendiente de aprobación del técnico.");
+        if (_errorAccion is null) _motivoProrroga = null;
+    }
+
+    private async Task DevolverAsync(int recursoId)
+    {
+        var form = Formulario(recursoId);
+        await AccionAsync($"api/solicitudes/{Id}/devoluciones",
+            new RegistrarDevolucionRequest { RecursoId = recursoId, DevueltoConDano = form.ConDano, Observacion = form.Observacion },
+            form.ConDano ? "Devolución registrada. El recurso quedó como dañado." : "Devolución registrada.");
+        if (_errorAccion is null) _devoluciones.Remove(recursoId);
+    }
+}
