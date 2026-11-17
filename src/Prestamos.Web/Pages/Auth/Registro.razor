@@ -14,18 +14,19 @@
 
             <AlertaError Problema="_error" />
 
-            <MudTextField T="string" @bind-Value="_modelo.Nombre" Label="Nombre completo" Variant="Variant.Outlined" Class="mb-3" />
+            <MudTextField T="string" @bind-Value="_modelo.Nombre" Label="Nombre completo" Variant="Variant.Outlined" Class="mb-3"
+                          Immediate="true" />
             <MudTextField T="string" @bind-Value="_modelo.Documento" Label="Documento" Variant="Variant.Outlined" Class="mb-3"
-                          HelperText="Solo números, entre 6 y 20 dígitos" />
+                          HelperText="Solo números, entre 6 y 20 dígitos" Immediate="true" />
             <MudTextField T="string" @bind-Value="_modelo.Correo" Label="Correo" Variant="Variant.Outlined"
-                          InputType="InputType.Email" Class="mb-3" />
+                          InputType="InputType.Email" Class="mb-3" Immediate="true" />
             <MudSelect T="string" @bind-Value="_modelo.TipoSolicitante" Label="Soy" Variant="Variant.Outlined" Class="mb-3">
                 <MudSelectItem T="string" Value="@("Estudiante")">Estudiante</MudSelectItem>
                 <MudSelectItem T="string" Value="@("Docente")">Docente</MudSelectItem>
             </MudSelect>
             <MudTextField T="string" @bind-Value="_modelo.Contrasena" Label="Contraseña" Variant="Variant.Outlined"
                           InputType="InputType.Password" Class="mb-4"
-                          HelperText="Mínimo 8 caracteres, con al menos una letra y un número" />
+                          HelperText="Mínimo 8 caracteres, con al menos una letra y un número" Immediate="true" />
 
             <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
                        Disabled="_enviando" OnClick="RegistrarAsync">
