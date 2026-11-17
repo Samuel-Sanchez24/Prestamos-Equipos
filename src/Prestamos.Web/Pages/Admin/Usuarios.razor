@@ -1,0 +1,173 @@
+﻿@page "/admin/usuarios"
+@inject ApiCliente Api
+@inject SesionUsuario Sesion
+@inject ISnackbar Snackbar
+
+<PageTitle>Usuarios · Préstamos ITM</PageTitle>
+
+<Protegida Roles="Administrador">
+    <div class="d-flex align-center justify-space-between flex-wrap gap-2 mb-4">
+        <MudText Color="Color.Secondary">El personal (técnicos y coordinación) solo lo registra el administrador (RF-03).</MudText>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PersonAdd"
+                   OnClick="AbrirNuevo">Registrar personal</MudButton>
+    </div>
+
+    <MudPaper Class="pa-4" Elevation="1">
+        <div class="d-flex align-center justify-space-between flex-wrap gap-2 mb-2">
+            <MudText Typo="Typo.h6">Usuarios registrados</MudText>
+            <MudSelect T="string" Value="_rol" ValueChanged="FiltrarAsync" Label="Rol" Variant="Variant.Outlined"
+                       ShrinkLabel="true" Margin="Margin.Dense" Style="max-width: 220px">
+                <MudSelectItem T="string" Value="@string.Empty">Todos</MudSelectItem>
+                <MudSelectItem T="string" Value="@("Solicitante")">Solicitantes</MudSelectItem>
+                <MudSelectItem T="string" Value="@("Tecnico")">Técnicos</MudSelectItem>
+                <MudSelectItem T="string" Value="@("Coordinacion")">Coordinación</MudSelectItem>
+                <MudSelectItem T="string" Value="@("Administrador")">Administradores</MudSelectItem>
+            </MudSelect>
+        </div>
+        <AlertaError Problema="_error" />
+        <MudSimpleTable Hover="true" Dense="true">
+            <thead>
+                <tr><th>Nombre</th><th>Documento</th><th>Correo</th><th>Rol</th><th>Tipo</th><th>Estado</th><th></th></tr>
+            </thead>
+            <tbody>
+                @foreach (var u in _usuarios)
+                {
+                    <tr>
+                        <td>@u.Nombre</td>
+                        <td class="mono">@u.Documento</td>
+                        <td>@u.Correo</td>
+                        <td>@TextoRol(u.Rol)</td>
+                        <td>@(u.TipoSolicitante ?? "—")</td>
+                        <td>
+                            <span class="estado @(u.Activo ? "estado--exito" : "estado--neutro")">@(u.Activo ? "Activo" : "Inactivo")</span>
+                        </td>
+                        <td style="text-align: right;">
+                            <div class="d-flex gap-1 justify-end flex-wrap">
+                                @if (u.Rol == "Solicitante")
+                                {
+                                    var otroTipo = u.TipoSolicitante == "Docente" ? "Estudiante" : "Docente";
+                                    <MudButton Size="Size.Small" Variant="Variant.Text" Disabled="_procesando"
+                                               OnClick="@(() => ActualizarAsync(u, new ActualizarUsuarioRequest { TipoSolicitante = otroTipo }))">
+                                        Cambiar a @otroTipo
+                                    </MudButton>
+                                }
+                                @if (u.Rol != "Administrador")
+                                {
+                                    <MudButton Size="Size.Small" Variant="Variant.Outlined" Disabled="_procesando"
+                                               Color="@(u.Activo ? Color.Error : Color.Success)"
+                                               OnClick="@(() => ActualizarAsync(u, new ActualizarUsuarioRequest { Activo = !u.Activo }))">
+                                        @(u.Activo ? "Desactivar" : "Activar")
+                                    </MudButton>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </MudSimpleTable>
+    </MudPaper>
+
+    @* ---------- Slide-over: registrar personal ---------- *@
+    <MudDrawer @bind-Open="_panelAbierto" Anchor="Anchor.End" Variant="DrawerVariant.Temporary"
+               Width="420px" Elevation="2" Overlay="true">
+        <MudDrawerHeader Class="d-flex align-center justify-space-between">
+            <MudText Typo="Typo.h6">Registrar personal</MudText>
+            <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="() => _panelAbierto = false" aria-label="Cerrar" />
+        </MudDrawerHeader>
+        <div class="slide-over__contenido">
+            <AlertaError Problema="_errorCrear" />
+            <MudTextField T="string" @bind-Value="_nuevo.Nombre" Label="Nombre completo" Variant="Variant.Outlined" ShrinkLabel="true" Immediate="true" />
+            <MudTextField T="string" @bind-Value="_nuevo.Documento" Label="Documento" Variant="Variant.Outlined" ShrinkLabel="true" Immediate="true"
+                          HelperText="Solo números, entre 6 y 20 dígitos" />
+            <MudTextField T="string" @bind-Value="_nuevo.Correo" Label="Correo" InputType="InputType.Email" Variant="Variant.Outlined"
+                          ShrinkLabel="true" Immediate="true" />
+            <MudSelect T="string" @bind-Value="_nuevo.Rol" Label="Rol" Variant="Variant.Outlined" ShrinkLabel="true">
+                <MudSelectItem T="string" Value="@("Tecnico")">Técnico</MudSelectItem>
+                <MudSelectItem T="string" Value="@("Coordinacion")">Coordinación</MudSelectItem>
+            </MudSelect>
+            <MudTextField T="string" @bind-Value="_nuevo.Contrasena" Label="Contraseña inicial" InputType="InputType.Password"
+                          Variant="Variant.Outlined" ShrinkLabel="true" Immediate="true" HelperText="Mínimo 8 caracteres, con letras y números" />
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Disabled="_procesando" OnClick="CrearAsync">
+                Registrar
+            </MudButton>
+            <MudButton Variant="Variant.Outlined" FullWidth="true" OnClick="() => _panelAbierto = false">Cancelar</MudButton>
+        </div>
+    </MudDrawer>
+</Protegida>
+
+@code {
+    private List<UsuarioResponse> _usuarios = [];
+    private CrearPersonalRequest _nuevo = new() { Rol = "Tecnico" };
+    private string _rol = string.Empty;
+    private bool _procesando;
+    private bool _panelAbierto;
+    private Problema? _error;
+    private Problema? _errorCrear;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Sesion.EsRol("Administrador")) await CargarAsync();
+    }
+
+    private static string TextoRol(string rol) => rol switch
+    {
+        "Tecnico" => "Técnico",
+        "Coordinacion" => "Coordinación",
+        _ => rol
+    };
+
+    private void AbrirNuevo()
+    {
+        _nuevo = new CrearPersonalRequest { Rol = "Tecnico" };
+        _errorCrear = null;
+        _panelAbierto = true;
+    }
+
+    private async Task CargarAsync()
+    {
+        var url = string.IsNullOrWhiteSpace(_rol) ? "api/usuarios" : $"api/usuarios?rol={_rol}";
+        var r = await Api.GetAsync<List<UsuarioResponse>>(url);
+        if (r.Exito) { _usuarios = r.Datos ?? []; _error = null; }
+        else _error = r.Problema;
+    }
+
+    private async Task FiltrarAsync(string rol)
+    {
+        _rol = rol;
+        await CargarAsync();
+    }
+
+    private async Task CrearAsync()
+    {
+        _procesando = true;
+        _errorCrear = null;
+        var r = await Api.PostAsync<UsuarioResponse>("api/usuarios", _nuevo);
+        _procesando = false;
+
+        if (!r.Exito)
+        {
+            _errorCrear = r.Problema;
+            return;
+        }
+        Snackbar.Add($"{r.Datos?.Nombre} registrado como {TextoRol(r.Datos?.Rol ?? string.Empty)}.", Severity.Success);
+        _panelAbierto = false;
+        await CargarAsync();
+    }
+
+    private async Task ActualizarAsync(UsuarioResponse u, ActualizarUsuarioRequest cambio)
+    {
+        _procesando = true;
+        var r = await Api.PatchAsync<UsuarioResponse>($"api/usuarios/{u.Id}", cambio);
+        _procesando = false;
+
+        if (r.Exito)
+        {
+            Snackbar.Add($"{u.Nombre} actualizado.", Severity.Success);
+            await CargarAsync();
+        }
+        else
+        {
+            Snackbar.Add(r.Problema?.Mensaje ?? "No se pudo actualizar.", Severity.Error);
+        }
+    }
+}
