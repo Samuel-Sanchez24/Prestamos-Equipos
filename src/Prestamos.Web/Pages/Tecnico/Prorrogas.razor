@@ -1,0 +1,136 @@
+﻿@page "/tecnico/prorrogas"
+@inject ApiCliente Api
+@inject SesionUsuario Sesion
+@inject ISnackbar Snackbar
+
+<PageTitle>Prórrogas · Préstamos ITM</PageTitle>
+
+<Protegida Roles="Tecnico">
+    <MudText Color="Color.Secondary" Class="mb-4">Aprueba o rechaza las solicitudes de más tiempo (RF-15).</MudText>
+
+    <MudPaper Class="pa-4 mb-4" Elevation="1">
+        <div class="d-flex align-center gap-3 flex-wrap">
+            <MudSelect T="string" @bind-Value="_estado" Label="Estado" Variant="Variant.Outlined" ShrinkLabel="true" Style="max-width: 240px">
+                <MudSelectItem T="string" Value="@("Pendiente")">Pendientes</MudSelectItem>
+                <MudSelectItem T="string" Value="@("Aprobada")">Aprobadas</MudSelectItem>
+                <MudSelectItem T="string" Value="@("Rechazada")">Rechazadas</MudSelectItem>
+                <MudSelectItem T="string" Value="@string.Empty">Todas</MudSelectItem>
+            </MudSelect>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CargarAsync"
+                       StartIcon="@Icons.Material.Filled.FilterList">Filtrar</MudButton>
+        </div>
+    </MudPaper>
+
+    <AlertaError Problema="_error" />
+
+    <MudPaper Elevation="1">
+        <MudSimpleTable Hover="true" Dense="true">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Solicitud</th>
+                    <th>Solicitante</th>
+                    <th>Recursos</th>
+                    <th>Fin actual → solicitada</th>
+                    <th>Motivo</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (_prorrogas.Count == 0)
+                {
+                    <tr><td colspan="8" class="text-center pa-4">No hay prórrogas con este filtro.</td></tr>
+                }
+                @foreach (var p in _prorrogas)
+                {
+                    <tr>
+                        <td class="mono">#@p.Id</td>
+                        <td><MudLink Href="@($"solicitudes/{p.SolicitudId}")" Class="mono">#@p.SolicitudId</MudLink></td>
+                        <td>@p.Solicitante</td>
+                        <td class="mono">@string.Join(", ", p.Recursos)</td>
+                        <td class="mono">@Formato.Corta(p.FechaFinAnterior) → <strong>@Formato.Corta(p.FechaFinSolicitada)</strong></td>
+                        <td>
+                            @p.Motivo
+                            @if (!string.IsNullOrWhiteSpace(p.MotivoRechazo))
+                            {
+                                <div class="mud-error-text text-small">Rechazo: @p.MotivoRechazo</div>
+                            }
+                        </td>
+                        <td><EstadoChip Estado="@p.Estado" /></td>
+                        <td style="min-width: 280px">
+                            @if (p.Estado == "Pendiente")
+                            {
+                                <div class="d-flex align-center gap-1 flex-wrap">
+                                    <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Success" Disabled="_procesando"
+                                               OnClick="@(() => AprobarAsync(p))">Aprobar</MudButton>
+                                    <MudTextField T="string" Value="@MotivoDe(p.Id)" ValueChanged="@((string v) => _motivos[p.Id] = v)"
+                                                  Placeholder="Motivo del rechazo" Margin="Margin.Dense" Variant="Variant.Outlined" Immediate="true" Style="max-width: 170px" />
+                                    <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Error" Disabled="_procesando"
+                                               OnClick="@(() => RechazarAsync(p))">Rechazar</MudButton>
+                                </div>
+                            }
+                            else
+                            {
+                                <span class="mud-text-secondary">@(p.EvaluadaPor ?? "—") · @Formato.Corta(p.FechaEvaluacion)</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </MudSimpleTable>
+    </MudPaper>
+</Protegida>
+
+@code {
+    private List<ProrrogaResponse> _prorrogas = [];
+    private readonly Dictionary<int, string> _motivos = [];
+    private string _estado = "Pendiente";
+    private bool _procesando;
+    private Problema? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Sesion.EsRol("Tecnico")) await CargarAsync();
+    }
+
+    private string MotivoDe(int id) => _motivos.TryGetValue(id, out var m) ? m : string.Empty;
+
+    private async Task CargarAsync()
+    {
+        _error = null;
+        var url = string.IsNullOrWhiteSpace(_estado) ? "api/prorrogas" : $"api/prorrogas?estado={_estado}";
+        var r = await Api.GetAsync<List<ProrrogaResponse>>(url);
+        if (r.Exito) _prorrogas = r.Datos ?? [];
+        else _error = r.Problema;
+    }
+
+    private async Task AprobarAsync(ProrrogaResponse p)
+    {
+        _procesando = true;
+        var r = await Api.PostAsync<ProrrogaResponse>($"api/prorrogas/{p.Id}/aprobar");
+        _procesando = false;
+        Notificar(r, $"Prórroga #{p.Id} aprobada: la solicitud #{p.SolicitudId} termina el {Formato.Corta(p.FechaFinSolicitada)}.");
+        if (r.Exito) await CargarAsync();
+    }
+
+    private async Task RechazarAsync(ProrrogaResponse p)
+    {
+        _procesando = true;
+        var r = await Api.PostAsync<ProrrogaResponse>($"api/prorrogas/{p.Id}/rechazar",
+            new RechazarProrrogaRequest { Motivo = MotivoDe(p.Id) });
+        _procesando = false;
+        Notificar(r, $"Prórroga #{p.Id} rechazada.");
+        if (r.Exito)
+        {
+            _motivos.Remove(p.Id);
+            await CargarAsync();
+        }
+    }
+
+    private void Notificar<T>(Resultado<T> r, string exito)
+    {
+        if (r.Exito) Snackbar.Add(exito, Severity.Success);
+        else Snackbar.Add(r.Problema?.Mensaje ?? "No se pudo completar la acción.", Severity.Error);
+    }
+}
