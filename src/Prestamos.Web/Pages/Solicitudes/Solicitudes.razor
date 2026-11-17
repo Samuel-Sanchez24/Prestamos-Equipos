@@ -1,0 +1,141 @@
+﻿@page "/solicitudes"
+@inject ApiCliente Api
+@inject SesionUsuario Sesion
+
+<PageTitle>Solicitudes · Préstamos ITM</PageTitle>
+
+<Protegida>
+    <MudText Color="Color.Secondary" Class="mb-4">
+        @(EsSolicitante
+            ? "Consulta el estado de tus solicitudes y su historial (RF-08, RF-17)."
+            : "Solicitudes de todos los usuarios en orden de llegada (RF-10, RF-17).")
+    </MudText>
+
+    <MudPaper Class="pa-4 mb-4" Elevation="1">
+        <MudGrid Spacing="2">
+            <MudItem xs="12" sm="6" md="4">
+                <MudSelect T="string" @bind-Value="_estado" Label="Estado" Variant="Variant.Outlined" ShrinkLabel="true">
+                    <MudSelectItem T="string" Value="@string.Empty">Todos</MudSelectItem>
+                    @foreach (var e in Estados)
+                    {
+                        <MudSelectItem T="string" Value="@e.Valor">@e.Texto</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4" Class="d-flex align-center gap-3">
+                <MudCheckBox T="bool" @bind-Value="_soloVencidas" Label="Solo vencidas" Color="Color.Error" />
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CargarAsync"
+                           StartIcon="@Icons.Material.Filled.FilterList">Filtrar</MudButton>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    <AlertaError Problema="_error" />
+    @if (_cargando)
+    {
+        <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mb-2" />
+    }
+
+    <MudPaper Elevation="1">
+        <MudSimpleTable Hover="true" Dense="true">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    @if (!EsSolicitante)
+                    {
+                        <th>Solicitante</th>
+                    }
+                    <th>Recursos</th>
+                    <th>Desde</th>
+                    <th>Hasta</th>
+                    <th>Estado</th>
+                    <th>Registrada</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!_cargando && _solicitudes.Count == 0)
+                {
+                    <tr><td colspan="8" class="text-center pa-4">No hay solicitudes con este filtro.</td></tr>
+                }
+                @foreach (var s in _solicitudes)
+                {
+                    <tr>
+                        <td class="mono">#@s.Id</td>
+                        @if (!EsSolicitante)
+                        {
+                            <td>@s.Solicitante <span class="mud-text-secondary">(@s.TipoSolicitante)</span></td>
+                        }
+                        <td class="mono">@string.Join(", ", s.Recursos.Select(r => r.Codigo))</td>
+                        <td class="mono">@Formato.Corta(s.FechaInicio)</td>
+                        <td class="mono">@Formato.Corta(s.FechaFin)</td>
+                        <td>
+                            <EstadoChip Estado="@s.Estado" />
+                            @if (s.Vencida)
+                            {
+                                <EstadoChip Estado="Vencida" />
+                            }
+                        </td>
+                        <td class="mono">@Formato.Corta(s.FechaRegistro)</td>
+                        <td style="text-align: right;">
+                            <MudButton Href="@($"solicitudes/{s.Id}")" Size="Size.Small" Variant="Variant.Outlined"
+                                       Color="Color.Primary">Ver</MudButton>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </MudSimpleTable>
+    </MudPaper>
+
+    @if (EsSolicitante)
+    {
+        <MudButton Href="catalogo" Variant="Variant.Filled" Color="Color.Primary" Class="mt-4"
+                   StartIcon="@Icons.Material.Filled.Add">Nueva solicitud</MudButton>
+    }
+</Protegida>
+
+@code {
+    private static readonly (string Valor, string Texto)[] Estados =
+    [
+        ("Pendiente", "Pendiente"), ("Aprobada", "Aprobada"), ("Entregada", "Entregada"),
+        ("Finalizada", "Finalizada"), ("Rechazada", "Rechazada"), ("Cancelada", "Cancelada"),
+        ("NoRecogida", "No recogida")
+    ];
+
+    private List<SolicitudResponse> _solicitudes = [];
+    private string _estado = string.Empty;
+    private bool _soloVencidas;
+    private bool _cargando;
+    private Problema? _error;
+
+    private bool EsSolicitante => Sesion.EsRol("Solicitante");
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Sesion.EstaAutenticado) await CargarAsync();
+    }
+
+    private async Task CargarAsync()
+    {
+        _error = null;
+        var url = "api/solicitudes?";
+        if (!string.IsNullOrWhiteSpace(_estado)) url += $"estado={_estado}&";
+        if (_soloVencidas) url += "vencidas=true&";
+
+        _cargando = true;
+        var r = await Api.GetAsync<List<SolicitudResponse>>(url.TrimEnd('&', '?'));
+        _cargando = false;
+
+        if (r.Exito)
+        {
+            // Las más recientes primero para el solicitante; en orden de llegada para el personal
+            _solicitudes = EsSolicitante
+                ? (r.Datos ?? []).OrderByDescending(s => s.FechaRegistro).ToList()
+                : r.Datos ?? [];
+        }
+        else
+        {
+            _error = r.Problema;
+        }
+    }
+}
