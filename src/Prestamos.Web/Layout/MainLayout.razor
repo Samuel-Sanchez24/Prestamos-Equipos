@@ -1,17 +1,35 @@
 ﻿@inherits LayoutComponentBase
+@implements IDisposable
+@inject SesionUsuario Sesion
+@inject NavigationManager Nav
 
 <MudLayout>
     <MudAppBar Elevation="0" Class="app-bar">
-        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start"
-                       OnClick="AlternarMenu" aria-label="Abrir o cerrar el menú" />
+        @if (Sesion.EstaAutenticado)
+        {
+            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start"
+                           OnClick="AlternarMenu" aria-label="Abrir o cerrar el menú" />
+        }
         <MudText Typo="Typo.h6" Class="ml-2 app-brand">Préstamos ITM</MudText>
         <MudSpacer />
+        @if (Sesion.EstaAutenticado)
+        {
+            <div class="d-flex flex-column align-end mr-3 usuario-info">
+                <MudText Typo="Typo.body2"><strong>@Sesion.Nombre</strong></MudText>
+                <MudText Typo="Typo.caption" Color="Color.Secondary">@TextoRol</MudText>
+            </div>
+            <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Logout"
+                       OnClick="CerrarSesionAsync">Salir</MudButton>
+        }
     </MudAppBar>
 
-    <MudDrawer @bind-Open="_menuAbierto" Variant="DrawerVariant.Responsive"
-               ClipMode="DrawerClipMode.Always" Elevation="0">
-        <NavMenu />
-    </MudDrawer>
+    @if (Sesion.EstaAutenticado)
+    {
+        <MudDrawer @bind-Open="_menuAbierto" Variant="DrawerVariant.Responsive"
+                   ClipMode="DrawerClipMode.Always" Elevation="0">
+            <NavMenu />
+        </MudDrawer>
+    }
 
     <MudMainContent>
         <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="py-6">
@@ -23,5 +41,26 @@
 @code {
     private bool _menuAbierto = true;
 
+    private string TextoRol => Sesion.Rol switch
+    {
+        "Solicitante" => Sesion.Usuario?.TipoSolicitante ?? "Solicitante",
+        "Tecnico" => "Técnico",
+        "Coordinacion" => "Coordinación",
+        "Administrador" => "Administrador",
+        _ => Sesion.Rol
+    };
+
+    protected override void OnInitialized() => Sesion.Cambio += Refrescar;
+
     private void AlternarMenu() => _menuAbierto = !_menuAbierto;
+
+    private async Task CerrarSesionAsync()
+    {
+        await Sesion.CerrarAsync();
+        Nav.NavigateTo("login");
+    }
+
+    private void Refrescar() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Sesion.Cambio -= Refrescar;
 }

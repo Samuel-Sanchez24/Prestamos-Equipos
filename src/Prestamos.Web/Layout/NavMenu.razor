@@ -1,3 +1,36 @@
+@implements IDisposable
+@inject SesionUsuario Sesion
+
 <MudNavMenu Class="pt-2">
     <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">Inicio</MudNavLink>
+    <MudNavLink Href="catalogo" Icon="@Icons.Material.Filled.Inventory2">Catálogo</MudNavLink>
+
+    @if (Sesion.EsRol("Solicitante"))
+    {
+        <MudNavLink Href="solicitudes" Icon="@Icons.Material.Filled.Assignment">Mis solicitudes</MudNavLink>
+    }
+
+    @if (Sesion.EsRol("Tecnico"))
+    {
+        <MudNavLink Href="tecnico/bandeja" Icon="@Icons.Material.Filled.Inbox">Bandeja del técnico</MudNavLink>
+        <MudNavLink Href="tecnico/prorrogas" Icon="@Icons.Material.Filled.EventRepeat">Prórrogas</MudNavLink>
+    }
+
+    @if (Sesion.EsRol("Tecnico", "Coordinacion"))
+    {
+        <MudNavLink Href="solicitudes" Icon="@Icons.Material.Filled.Assignment">Todas las solicitudes</MudNavLink>
+        <MudNavLink Href="coordinacion" Icon="@Icons.Material.Filled.Insights">Panel consolidado</MudNavLink>
+    }
+
+    @if (Sesion.EsRol("Administrador"))
+    {
+        <MudNavLink Href="admin/usuarios" Icon="@Icons.Material.Filled.ManageAccounts">Usuarios</MudNavLink>
+        <MudNavLink Href="admin/recursos" Icon="@Icons.Material.Filled.Category">Recursos y categorías</MudNavLink>
+    }
 </MudNavMenu>
+
+@code {
+    protected override void OnInitialized() => Sesion.Cambio += Refrescar;
+    private void Refrescar() => InvokeAsync(StateHasChanged);
+    public void Dispose() => Sesion.Cambio -= Refrescar;
+}

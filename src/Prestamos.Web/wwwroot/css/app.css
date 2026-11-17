@@ -79,3 +79,27 @@ h1:focus {
         right: .75rem;
         top: .5rem;
     }
+
+/* ---------- Ajustes de las pantallas ---------- */
+.text-small {
+    font-size: .8rem;
+}
+
+.usuario-info {
+    line-height: 1.1;
+}
+
+.acceso {
+    height: 100%;
+}
+
+.mud-simple-table th {
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+    .usuario-info {
+        display: none !important;
+    }
+}

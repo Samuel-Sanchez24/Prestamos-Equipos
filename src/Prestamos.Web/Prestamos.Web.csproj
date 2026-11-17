@@ -17,15 +17,5 @@
     <ProjectReference Include="..\Prestamos.Contracts\Prestamos.Contracts.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Components\" />
-    <Folder Include="Services\" />
-    <Folder Include="Pages\Auth\" />
-    <Folder Include="Pages\Catalogo\" />
-    <Folder Include="Pages\Coordinacion\" />
-    <Folder Include="Pages\Admin\" />
-    <Folder Include="Pages\Tecnico\" />
-    <Folder Include="Pages\Solicitudes\" />
-  </ItemGroup>
 
 </Project>
