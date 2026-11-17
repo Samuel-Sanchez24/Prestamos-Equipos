@@ -14,9 +14,9 @@
             <AlertaError Problema="_error" />
 
             <MudTextField T="string" @bind-Value="_modelo.Correo" Label="Correo" Variant="Variant.Outlined"
-                          InputType="InputType.Email" Class="mb-3" />
+                          InputType="InputType.Email" Class="mb-3" Immediate="true"/>
             <MudTextField T="string" @bind-Value="_modelo.Contrasena" Label="Contraseña" Variant="Variant.Outlined"
-                          InputType="InputType.Password" Class="mb-4" OnKeyDown="TeclaAsync" />
+                          InputType="InputType.Password" Class="mb-4" OnKeyDown="TeclaAsync" Immediate="true" />
 
             <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
                        Disabled="_enviando" OnClick="IngresarAsync">
