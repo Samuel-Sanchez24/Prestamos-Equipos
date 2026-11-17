@@ -1,30 +1,29 @@
-@* Muestra un estado (de solicitud, recurso, préstamo o prórroga) con color y texto legible *@
-<MudChip T="string" Size="Size.Small" Color="@_color" Variant="Variant.Filled" Class="ma-0">@_texto</MudChip>
+@* Badge tipo píldora para estados de solicitud, recurso, préstamo o prórroga (contraste AA) *@
+<span class="estado estado--@_clase">@_texto</span>
 
 @code {
     [Parameter] public string Estado { get; set; } = string.Empty;
 
-    private Color _color = Color.Default;
+    private string _clase = "neutro";
     private string _texto = string.Empty;
 
     protected override void OnParametersSet()
     {
-        (_color, _texto) = Estado switch
+        (_clase, _texto) = Estado switch
         {
-            "Pendiente" => (Color.Warning, "Pendiente"),
-            "Aprobada" => (Color.Info, "Aprobada"),
-            "Entregada" => (Color.Primary, "Entregada"),
-            "Finalizada" => (Color.Success, "Finalizada"),
-            "Rechazada" => (Color.Error, "Rechazada"),
-            "Cancelada" => (Color.Default, "Cancelada"),
-            "NoRecogida" => (Color.Secondary, "No recogida"),
-            "Disponible" => (Color.Success, "Disponible"),
-            "Danado" => (Color.Error, "Dañado"),
-            "DadoDeBaja" => (Color.Default, "Dado de baja"),
-            "Activo" => (Color.Primary, "Activo"),
-            "Vencido" or "Vencida" => (Color.Error, "Vencido"),
-            "Devuelto" => (Color.Success, "Devuelto"),
-            _ => (Color.Default, Estado)
+            "Pendiente" => ("pendiente", "Pendiente"),
+            "NoRecogida" => ("no-recogida", "No recogida"),
+            "Aprobada" => ("aprobada", "Aprobada"),
+            "Entregada" or "Activo" => ("entregada", Estado == "Activo" ? "Activo" : "Entregada"),
+            "Finalizada" => ("exito", "Finalizada"),
+            "Disponible" => ("exito", "Disponible"),
+            "Devuelto" => ("exito", "Devuelto"),
+            "Rechazada" => ("error", "Rechazada"),
+            "Danado" => ("error", "Dañado"),
+            "Vencido" or "Vencida" => ("vencida", "Vencida"),
+            "Cancelada" => ("neutro", "Cancelada"),
+            "DadoDeBaja" => ("neutro", "Dado de baja"),
+            _ => ("neutro", Estado)
         };
     }
 }

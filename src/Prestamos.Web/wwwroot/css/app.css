@@ -103,3 +103,299 @@ h1:focus {
         display: none !important;
     }
 }
+
+/* ================= Sistema de diseño Préstamos ITM ================= */
+:root {
+    --itm-primario: #4F46E5;
+    --itm-primario-hover: #4338CA;
+    --itm-fondo: #F8FAFC;
+    --itm-borde: #E2E8F0;
+    --itm-texto: #0F172A;
+    --itm-texto-2: #64748B;
+    --itm-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+}
+
+body {
+    font-size: 15px;
+    color: var(--itm-texto);
+    background: var(--itm-fondo);
+}
+
+.mono {
+    font-family: var(--itm-mono) !important;
+    font-size: .9em;
+}
+
+/* ---------- Botones ---------- */
+.mud-button-root.mud-button {
+    min-height: 40px;
+    border-radius: 10px;
+    text-transform: none;
+    font-weight: 600;
+    letter-spacing: 0;
+    box-shadow: none;
+}
+
+    .mud-button-root.mud-button.mud-button-size-small {
+        min-height: 32px;
+        border-radius: 8px;
+    }
+
+.mud-button-filled-primary:hover {
+    background-color: var(--itm-primario-hover) !important;
+}
+
+.mud-button-outlined {
+    border-color: var(--itm-borde) !important;
+    background: #fff;
+}
+
+.mud-button-root:focus-visible, .mud-icon-button:focus-visible,
+.mud-nav-link:focus-visible, a:focus-visible, .recurso-card:focus-visible {
+    outline: 2px solid var(--itm-primario);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(79, 70, 229, .2);
+}
+
+/* ---------- Superficies y tarjetas ---------- */
+.mud-paper.mud-elevation-1, .mud-paper-outlined, .mud-card {
+    background: #fff;
+    border: 1px solid var(--itm-borde);
+    border-radius: 14px !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .05) !important;
+}
+
+/* ---------- Formularios ---------- */
+.mud-input.mud-input-outlined:not(.mud-input-multiline) {
+    min-height: 44px;
+}
+
+.mud-input-helper-text {
+    color: var(--itm-texto-2);
+}
+
+    .mud-input-error .mud-input-helper-text, .mud-input-helper-text.mud-input-error {
+        color: #B91C1C;
+    }
+
+/* ---------- Tablas ---------- */
+.mud-simple-table table {
+    font-size: 14px;
+}
+
+.mud-simple-table th {
+    color: var(--itm-texto-2);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+/* ---------- Sidebar ---------- */
+.app-sidebar {
+    background: #0F172A !important;
+    border-right: 0;
+}
+
+.app-sidebar__brand {
+    padding: 22px 22px 14px;
+    color: #fff;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: .08em;
+}
+
+.app-sidebar .mud-nav-link {
+    color: #CBD5E1;
+    border-radius: 10px;
+    margin: 2px 10px;
+    width: auto;
+}
+
+    .app-sidebar .mud-nav-link:hover {
+        background: rgba(255, 255, 255, .06);
+        color: #fff;
+    }
+
+    .app-sidebar .mud-nav-link.active:not(.mud-nav-link-disabled) {
+        background: var(--itm-primario) !important;
+        color: #fff !important;
+    }
+
+    .app-sidebar .mud-nav-link.active .mud-nav-link-icon {
+        color: #fff !important;
+    }
+
+/* ---------- Header ---------- */
+.app-bar {
+    background: #fff !important;
+    border-bottom: 1px solid var(--itm-borde);
+}
+
+.app-bar__title {
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.app-bar__search {
+    max-width: 320px;
+}
+
+    .app-bar__search .mud-input {
+        background: var(--itm-fondo);
+    }
+
+.usuario-menu {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 8px;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+    .usuario-menu:hover {
+        background: var(--itm-fondo);
+    }
+
+.usuario-info__nombre {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.usuario-info__rol {
+    font-size: 12px;
+    color: var(--itm-texto-2);
+}
+
+@media (max-width: 600px) {
+    .app-bar__search {
+        display: none;
+    }
+}
+
+/* ---------- Badges de estado ---------- */
+.estado {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 10px;
+    border: 1px solid;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.6;
+    white-space: nowrap;
+}
+
+.estado--pendiente {
+    background: #FFFBEB;
+    color: #92400E;
+    border-color: #FDE68A;
+}
+
+.estado--no-recogida {
+    background: #E7E5E4;
+    color: #292524;
+    border-color: #D6D3D1;
+}
+
+.estado--aprobada {
+    background: #EFF6FF;
+    color: #1E40AF;
+    border-color: #BFDBFE;
+}
+
+.estado--entregada {
+    background: #F5F3FF;
+    color: #5B21B6;
+    border-color: #DDD6FE;
+}
+
+.estado--exito {
+    background: #ECFDF5;
+    color: #065F46;
+    border-color: #A7F3D0;
+}
+
+.estado--error {
+    background: #FFF1F2;
+    color: #9F1239;
+    border-color: #FECDD3;
+}
+
+.estado--vencida {
+    background: #FEE2E2;
+    color: #7F1D1D;
+    border-color: #FCA5A5;
+    font-weight: 600;
+}
+
+.estado--neutro {
+    background: #F1F5F9;
+    color: #334155;
+    border-color: #E2E8F0;
+}
+
+/* ---------- Catálogo (tarjetas tipo marketplace) ---------- */
+.recurso-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 16px;
+    cursor: pointer;
+    transition: box-shadow .15s ease, transform .15s ease, border-color .15s ease;
+}
+
+    .recurso-card:hover {
+        box-shadow: 0 4px 6px -1px rgba(15, 23, 42, .1), 0 2px 4px -2px rgba(15, 23, 42, .1) !important;
+        transform: translateY(-2px);
+    }
+
+.recurso-card--seleccionada {
+    border-color: var(--itm-primario) !important;
+    box-shadow: 0 0 0 2px rgba(79, 70, 229, .25) !important;
+}
+
+.recurso-card--no-disponible {
+    opacity: .6;
+}
+
+.recurso-card__imagen {
+    height: 96px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--itm-fondo);
+    border-radius: 10px;
+    color: var(--itm-primario);
+}
+
+.recurso-card__nombre {
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+/* ---------- Panel lateral deslizable (slide-over) ---------- */
+.slide-over__contenido {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.slide-over__fila {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 14px;
+}
+
+    .slide-over__fila span:first-child {
+        color: var(--itm-texto-2);
+    }
+
+.barra-solicitud {
+    position: sticky;
+    bottom: 16px;
+    z-index: 5;
+}
