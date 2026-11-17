@@ -155,13 +155,14 @@ Las pruebas se ejecutaron manualmente con **Swagger UI** (`https://localhost:701
 ### P-12: Integración interfaz–API–base de datos
 | Campo | Detalle |
 |---|---|
-| Requisito | Todas las CA |
-| Condiciones iniciales | Frontend Blazor conectado a la API |
-| Pasos | Ciclo completo desde la interfaz: solicitar → aprobar → entregar → devolver |
-| Resultado esperado | Flujo completo demostrado desde la interfaz hasta la base de datos |
-| Resultado obtenido | La parte API–base de datos está demostrada en P-07 a P-10. La interfaz está en desarrollo. |
-| Estado |  Pendiente de la integración del frontend |
-| Evidencia | Por completar |
+| Requisito | CA-01 a CA-06 · RT-01 · RT-02 |
+| Condiciones iniciales | API (`https://localhost:7011`) y frontend (`https://localhost:7262`) en ejecución, con la base de datos y sus datos semilla. |
+| Pasos | 1. Ana inicia sesión → **Catálogo**, fechas de hoy a dentro de 3 días → **Seleccionar** en 1 o 2 tarjetas disponibles → escribe el motivo → **Enviar solicitud**. 2. Cierra sesión → el técnico inicia sesión → **Bandeja** → **Gestionar** → **Aprobar** (panel lateral) → pestaña *Por entregar* → **Gestionar** → **Registrar entrega**. 3. Ana → **Catálogo** con las mismas fechas: los recursos aparecen *No disponible*. 4. Técnico → **Bandeja** → *En préstamo* → **Gestionar** → devuelve un recurso sin daño y el otro con daño (con observación). 5. Coordinación → **Panel consolidado** → *Devueltos*. 6. Swagger: `GET /api/solicitudes/{id}/movimientos` confirma lo guardado. |
+| Resultado esperado | Cada acción de la interfaz se refleja en la API y la base de datos: la solicitud pasa por Pendiente → Aprobada → Entregada → Finalizada, el recurso dañado queda en `Dañado` y el panel muestra el préstamo con sus responsables. |
+| Resultado obtenido | El flujo se completó desde la interfaz; la disponibilidad, los estados y el historial coinciden con la base de datos. |
+| Método / código | Interfaz web → POST/GET de la API · 200/201 |
+| Estado | ✅ Aprobada |
+| Evidencia | [`integracion/`](../evidencias/integracion): `01-login`, `02-catalogo-seleccion`, `03-solicitud-creada`, `04-bandeja-aprobar`, `05-entregar`, `06-catalogo-no-disponible`, `07-devoluciones`, `08-solicitud-finalizada`, `09-panel-coordinacion`, `10-error-validacion-en-interfaz` |
 
 ---
 
