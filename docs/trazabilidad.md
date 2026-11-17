@@ -15,6 +15,19 @@ Las pruebas **P-01 a P-12** son las mínimas de la guía; el detalle de cada una
 | **CA-05** Devolución e historial | RF-14 a RF-17, RF-19, RN-12 a RN-15, RN-18 | `POST /api/solicitudes/{id}/devoluciones`, `GET /api/solicitudes/{id}/movimientos`, `POST /api/solicitudes/{id}/prorrogas`, `/api/prorrogas/*` · `Solicitud.RegistrarDevolucion()` · `ProrrogaServicio` · tabla `Movimientos` | #15, #16 | P-09, P-10 · [`evidencias/gestion`](../evidencias/gestion) 14–20 · [`evidencias/prorrogas`](../evidencias/prorrogas) |
 | **CA-06** Información consolidada | RF-18, RF-19, RN-17, S-07 | `GET /api/reportes/resumen`, `GET /api/reportes/prestamos` · `ReporteServicio` · `ReporteRepositorio` | #17 | P-11 · [`evidencias/reportes`](../evidencias/reportes) |
 
+## Pantallas del frontend por condición
+
+| Condición | Pantalla (`src/Prestamos.Web`) | Prueba |
+|---|---|---|
+| CA-01 | `Pages/Catalogo/Catalogo.razor` (`/catalogo`) | P-12 · `integracion/02`, `06` |
+| CA-02 | `Catalogo.razor` (envío) · `Pages/Solicitudes/Solicitudes.razor` · `DetalleSolicitud.razor` (cancelar) | P-12 · `integracion/03` |
+| CA-03 | `Pages/Tecnico/Bandeja.razor` (panel lateral: aprobar, rechazar) · `DetalleSolicitud.razor` | P-12 · `integracion/04` |
+| CA-04 | `Bandeja.razor` (panel lateral: entregar, no recogida) · `DetalleSolicitud.razor` | P-12 · `integracion/05`, `06` |
+| CA-05 | `Bandeja.razor` (panel lateral: devolución por recurso) · `DetalleSolicitud.razor` (prórroga, historial) · `Pages/Tecnico/Prorrogas.razor` | P-12 · `integracion/07`, `08` |
+| CA-06 | `Pages/Coordinacion/Panel.razor` (`/coordinacion`) | P-12 · `integracion/09` |
+
+Componentes comunes: `Services/ApiCliente.cs` (comunicación con la API y errores ProblemDetails), `Services/SesionUsuario.cs` (token JWT y rol), `Components/Protegida.razor` (acceso por rol en la interfaz).
+
 ## Requisitos transversales
 
 | Requisito | Implementación | Pull request | Prueba |
