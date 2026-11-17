@@ -1,0 +1,24 @@
+@* Muestra el error devuelto por la API, con el detalle por campo cuando existe *@
+@if (Problema is not null)
+{
+    <MudAlert Severity="Severity.Error" Class="my-3" Dense="true">
+        <strong>@Problema.Titulo</strong>
+        @if (!string.IsNullOrWhiteSpace(Problema.Detalle) && Problema.Detalle != Problema.Titulo)
+        {
+            <div>@Problema.Detalle</div>
+        }
+        @if (Problema.Errores.Count > 0)
+        {
+            <ul class="mb-0 mt-1 pl-4">
+                @foreach (var error in Problema.Errores)
+                {
+                    <li>@error</li>
+                }
+            </ul>
+        }
+    </MudAlert>
+}
+
+@code {
+    [Parameter] public Problema? Problema { get; set; }
+}

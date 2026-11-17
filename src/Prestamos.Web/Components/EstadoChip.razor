@@ -1,0 +1,30 @@
+@* Muestra un estado (de solicitud, recurso, préstamo o prórroga) con color y texto legible *@
+<MudChip T="string" Size="Size.Small" Color="@_color" Variant="Variant.Filled" Class="ma-0">@_texto</MudChip>
+
+@code {
+    [Parameter] public string Estado { get; set; } = string.Empty;
+
+    private Color _color = Color.Default;
+    private string _texto = string.Empty;
+
+    protected override void OnParametersSet()
+    {
+        (_color, _texto) = Estado switch
+        {
+            "Pendiente" => (Color.Warning, "Pendiente"),
+            "Aprobada" => (Color.Info, "Aprobada"),
+            "Entregada" => (Color.Primary, "Entregada"),
+            "Finalizada" => (Color.Success, "Finalizada"),
+            "Rechazada" => (Color.Error, "Rechazada"),
+            "Cancelada" => (Color.Default, "Cancelada"),
+            "NoRecogida" => (Color.Secondary, "No recogida"),
+            "Disponible" => (Color.Success, "Disponible"),
+            "Danado" => (Color.Error, "Dañado"),
+            "DadoDeBaja" => (Color.Default, "Dado de baja"),
+            "Activo" => (Color.Primary, "Activo"),
+            "Vencido" or "Vencida" => (Color.Error, "Vencido"),
+            "Devuelto" => (Color.Success, "Devuelto"),
+            _ => (Color.Default, Estado)
+        };
+    }
+}
