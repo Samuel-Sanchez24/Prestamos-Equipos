@@ -1,0 +1,93 @@
+@page "/login"
+@inject ApiCliente Api
+@inject SesionUsuario Sesion
+@inject NavigationManager Nav
+
+<PageTitle>Iniciar sesión · Préstamos ITM</PageTitle>
+
+<MudGrid Justify="Justify.Center" Class="mt-6">
+    <MudItem xs="12" sm="8" md="5">
+        <MudPaper Class="pa-6" Elevation="1">
+            <h1 class="mud-typography mud-typography-h5 mb-1">Iniciar sesión</h1>
+            <MudText Color="Color.Secondary" Class="mb-4">Gestión de préstamos de equipos y recursos</MudText>
+
+            <AlertaError Problema="_error" />
+
+            <MudTextField T="string" @bind-Value="_modelo.Correo" Label="Correo" Variant="Variant.Outlined"
+                          InputType="InputType.Email" Class="mb-3" />
+            <MudTextField T="string" @bind-Value="_modelo.Contrasena" Label="Contraseña" Variant="Variant.Outlined"
+                          InputType="InputType.Password" Class="mb-4" OnKeyDown="TeclaAsync" />
+
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true"
+                       Disabled="_enviando" OnClick="IngresarAsync">
+                @(_enviando ? "Ingresando…" : "Ingresar")
+            </MudButton>
+
+            <MudText Class="mt-4" Typo="Typo.body2">
+                ¿Eres estudiante o docente y no tienes cuenta? <MudLink Href="registro">Regístrate</MudLink>
+            </MudText>
+        </MudPaper>
+
+        <MudPaper Class="pa-4 mt-4" Elevation="0" Outlined="true">
+            <MudText Typo="Typo.subtitle2" Class="mb-2">Usuarios de prueba (contraseña: Prestamos2026*)</MudText>
+            @foreach (var (correo, rol) in _demo)
+            {
+                <div class="d-flex justify-space-between align-center py-1">
+                    <MudText Typo="Typo.body2">@correo <span class="mud-text-secondary">· @rol</span></MudText>
+                    <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="@(() => Usar(correo))">Usar</MudButton>
+                </div>
+            }
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    [SupplyParameterFromQuery] public string? Volver { get; set; }
+
+    private readonly LoginRequest _modelo = new();
+    private Problema? _error;
+    private bool _enviando;
+
+    private readonly (string Correo, string Rol)[] _demo =
+    [
+        ("ana.perez@prestamos.test", "Estudiante"),
+        ("juan.martinez@prestamos.test", "Docente"),
+        ("tecnico@prestamos.test", "Técnico"),
+        ("coordinacion@prestamos.test", "Coordinación"),
+        ("admin@prestamos.test", "Administrador")
+    ];
+
+    protected override void OnInitialized()
+    {
+        if (Sesion.EstaAutenticado) Nav.NavigateTo("");
+    }
+
+    private void Usar(string correo)
+    {
+        _modelo.Correo = correo;
+        _modelo.Contrasena = "Prestamos2026*";
+    }
+
+    private async Task TeclaAsync(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await IngresarAsync();
+    }
+
+    private async Task IngresarAsync()
+    {
+        _enviando = true;
+        _error = null;
+
+        var r = await Api.PostAsync<SesionResponse>("api/auth/login", _modelo);
+        _enviando = false;
+
+        if (!r.Exito || r.Datos is null)
+        {
+            _error = r.Problema;
+            return;
+        }
+
+        await Sesion.IniciarAsync(r.Datos);
+        Nav.NavigateTo(string.IsNullOrWhiteSpace(Volver) ? "" : Volver);
+    }
+}
