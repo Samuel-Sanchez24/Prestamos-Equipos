@@ -431,3 +431,25 @@ body {
     .mud-drawer:not(.app-sidebar) .mud-input-helper-text {
         color: #64748B;
     }
+
+/* ---------- Páginas de error y 404 ---------- */
+.pagina-error {
+    max-width: 560px;
+    margin: 48px auto;
+    text-align: center;
+}
+
+.pagina-error__codigo {
+    font-size: 64px;
+    font-weight: 500;
+    color: var(--itm-primario);
+    line-height: 1;
+    margin-bottom: 12px;
+}
+
+.pagina-error__detalle {
+    text-align: left;
+    color: var(--itm-texto-2);
+    font-size: 13px;
+    word-break: break-word;
+}

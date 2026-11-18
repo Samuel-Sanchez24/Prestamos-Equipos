@@ -15,6 +15,7 @@ var apiUrl = builder.Configuration["ApiUrl"] ?? "https://localhost:7011/";
 builder.Services.AddMudServices();
 builder.Services.AddScoped(_ => new HttpClient { BaseAddress = new Uri(apiUrl) });
 builder.Services.AddSingleton<SesionUsuario>();
+builder.Services.AddSingleton<RegistroErrores>();
 builder.Services.AddScoped<ApiCliente>();
 
 var host = builder.Build();
