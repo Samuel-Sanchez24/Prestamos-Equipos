@@ -42,6 +42,7 @@
                 </ActivatorContent>
                 <ChildContent>
                     <MudMenuItem Disabled="true">@Sesion.Usuario?.Correo</MudMenuItem>
+                    <MudMenuItem Href="errores">Registro de errores</MudMenuItem>
                     <MudMenuItem OnClick="CerrarSesionAsync">Cerrar sesión</MudMenuItem>
                 </ChildContent>
             </MudMenu>
@@ -54,13 +55,21 @@
 
     <MudMainContent>
         <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="py-6">
-            @Body
+            <ErrorBoundary @ref="_limiteErrores">
+                <ChildContent>
+                    @Body
+                </ChildContent>
+                <ErrorContent Context="ex">
+                    <ErrorCapturado Excepcion="ex" />
+                </ErrorContent>
+            </ErrorBoundary>
         </MudContainer>
     </MudMainContent>
 </MudLayout>
 
 @code {
     private bool _menuAbierto = true;
+    private ErrorBoundary? _limiteErrores;
     private string? _busqueda;
 
     private string Inicial => string.IsNullOrWhiteSpace(Sesion.Nombre) ? "?" : Sesion.Nombre[..1].ToUpperInvariant();
@@ -89,6 +98,9 @@
             if (ruta.StartsWith("coordinacion")) return "Panel consolidado";
             if (ruta.StartsWith("admin/usuarios")) return "Usuarios";
             if (ruta.StartsWith("admin/recursos")) return "Recursos y categorías";
+            if (ruta.StartsWith("errores")) return "Registro de errores";
+            if (ruta.StartsWith("error")) return "Error";
+            if (ruta.StartsWith("not-found")) return "Página no encontrada";
             return "Préstamos ITM";
         }
     }
@@ -115,7 +127,13 @@
         Nav.NavigateTo("login");
     }
 
-    private void AlCambiarRuta(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e) => Refrescar();
+    // Al navegar a otra pantalla se limpia el error capturado
+    private void AlCambiarRuta(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        _limiteErrores?.Recover();
+        Refrescar();
+    }
+
     private void Refrescar() => InvokeAsync(StateHasChanged);
 
     public void Dispose()
@@ -123,4 +141,5 @@
         Sesion.Cambio -= Refrescar;
         Nav.LocationChanged -= AlCambiarRuta;
     }
+}
 }

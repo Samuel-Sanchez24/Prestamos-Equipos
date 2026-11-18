@@ -1,0 +1,25 @@
+﻿@page "/error"
+@inject RegistroErrores Registro
+
+<PageTitle>Error · Préstamos ITM</PageTitle>
+
+<PaginaError CodigoTexto="@(Codigo > 0 ? Codigo.ToString() : "Error")"
+             Titulo="@Titulo" Mensaje="@Mensaje" Detalle="@Registro.Ultimo?.Detalle" />
+
+@code {
+    [SupplyParameterFromQuery] public int Codigo { get; set; }
+
+    private string Titulo => Codigo switch
+    {
+        0 => "Sin conexión con el servidor",
+        >= 500 => "Error interno del servidor",
+        _ => "Ocurrió un error"
+    };
+
+    private string Mensaje => Codigo switch
+    {
+        0 => "Verifica que la API esté en ejecución e inténtalo de nuevo.",
+        >= 500 => "El servidor no pudo completar la operación. El error quedó registrado.",
+        _ => "No se pudo completar la operación."
+    };
+}

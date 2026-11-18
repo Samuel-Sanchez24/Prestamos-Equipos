@@ -1,0 +1,53 @@
+﻿@page "/errores"
+@implements IDisposable
+@inject RegistroErrores Registro
+
+<PageTitle>Registro de errores · Préstamos ITM</PageTitle>
+
+<div class="d-flex align-center justify-space-between flex-wrap gap-2 mb-4">
+    <MudText Color="Color.Secondary">
+        Errores de esta sesión del navegador (API, conexión e interfaz). También aparecen en la consola del navegador (F12).
+    </MudText>
+    <MudButton Variant="Variant.Outlined" Color="Color.Error" StartIcon="@Icons.Material.Filled.DeleteSweep"
+               Disabled="@(Registro.Errores.Count == 0)" OnClick="Registro.Limpiar">Limpiar</MudButton>
+</div>
+
+<MudPaper Elevation="1">
+    <MudSimpleTable Hover="true" Dense="true">
+        <thead>
+            <tr><th>Hora</th><th>Origen</th><th>Código</th><th>Error</th><th>Detalle</th><th>Petición</th></tr>
+        </thead>
+        <tbody>
+            @if (Registro.Errores.Count == 0)
+            {
+                <tr><td colspan="6" class="text-center pa-4">No se han registrado errores.</td></tr>
+            }
+            @foreach (var e in Registro.Errores)
+            {
+                <tr>
+                    <td class="mono">@e.Fecha.ToString("HH:mm:ss")</td>
+                    <td>@e.Origen</td>
+                    <td><span class="estado @ClaseCodigo(e.Codigo)">@(e.Codigo?.ToString() ?? "—")</span></td>
+                    <td>@e.Titulo</td>
+                    <td>@(e.Detalle ?? "—")</td>
+                    <td class="mono text-small">@(e.Ruta ?? "—")</td>
+                </tr>
+            }
+        </tbody>
+    </MudSimpleTable>
+</MudPaper>
+
+@code {
+    protected override void OnInitialized() => Registro.Cambio += Refrescar;
+
+    private static string ClaseCodigo(int? codigo) => codigo switch
+    {
+        >= 500 or 0 => "estado--vencida",
+        404 => "estado--neutro",
+        401 or 403 => "estado--pendiente",
+        _ => "estado--error"
+    };
+
+    private void Refrescar() => InvokeAsync(StateHasChanged);
+    public void Dispose() => Registro.Cambio -= Refrescar;
+}
