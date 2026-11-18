@@ -35,5 +35,5 @@ Evitar mensajes genéricos como `cambios`, `update` o `avance`.
 ## Responsables
 | Integrante | Usuario GitHub | Responsabilidad principal |
 |---|---|---|
-| Samuel Andrés Sánchez Orrego | [@Samuel-Sanchez24](https://github.com/Samuel-Sanchez24) | Requisitos y diseño; backend completo: dominio, persistencia (EF Core + SQL Server), API REST, autenticación JWT, reglas de negocio y concurrencia; pruebas funcionales, evidencias y documentación. Ramas `docs/*` y `feature/*` del backend (PR #1 a #17). |
-| Dani Moreno Ciro | [@Dani-M0](https://github.com/Dani-M0)| Entrevista de levantamiento de requisitos; frontend en Blazor WebAssembly: cliente HTTP, layout y autenticación (ramas `feature/web-*`). |
+| Samuel Andrés Sánchez Orrego | [@Samuel-Sanchez24](https://github.com/Samuel-Sanchez24) | Requisitos y diseño; backend completo: dominio, persistencia (EF Core + SQL Server), API REST, autenticación JWT, reglas de negocio y concurrencia; pruebas funcionales, evidencias y documentación. Ramas `docs/*` y `feature/*` del backend (PR #1 a #20). |
+| Dani Moreno Ciro | [@Dani-M0](https://github.com/Dani-M0)| Entrevista de levantamiento de requisitos; frontend completo en Blazor WebAssembly + MudBlazor: cliente HTTP y sesión, sistema de diseño, autenticación, catálogo, solicitudes, bandeja del técnico, prórrogas, panel de Coordinación, administración y manejo de errores; evidencias de integración P-12 (ramas `feature/web-*` y `docs/integracion`, PR #21 a #30). |

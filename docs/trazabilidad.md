@@ -17,16 +17,16 @@ Las pruebas **P-01 a P-12** son las mínimas de la guía; el detalle de cada una
 
 ## Pantallas del frontend por condición
 
-| Condición | Pantalla (`src/Prestamos.Web`) | Prueba |
-|---|---|---|
-| CA-01 | `Pages/Catalogo/Catalogo.razor` (`/catalogo`) | P-12 · `integracion/02`, `06` |
-| CA-02 | `Catalogo.razor` (envío) · `Pages/Solicitudes/Solicitudes.razor` · `DetalleSolicitud.razor` (cancelar) | P-12 · `integracion/03` |
-| CA-03 | `Pages/Tecnico/Bandeja.razor` (panel lateral: aprobar, rechazar) · `DetalleSolicitud.razor` | P-12 · `integracion/04` |
-| CA-04 | `Bandeja.razor` (panel lateral: entregar, no recogida) · `DetalleSolicitud.razor` | P-12 · `integracion/05`, `06` |
-| CA-05 | `Bandeja.razor` (panel lateral: devolución por recurso) · `DetalleSolicitud.razor` (prórroga, historial) · `Pages/Tecnico/Prorrogas.razor` | P-12 · `integracion/07`, `08` |
-| CA-06 | `Pages/Coordinacion/Panel.razor` (`/coordinacion`) | P-12 · `integracion/09` |
+| Condición | Pantalla (`src/Prestamos.Web`) | Pull request | Prueba |
+|---|---|---|---|
+| CA-01 | `Pages/Catalogo/Catalogo.razor` (`/catalogo`) | #23 | P-12 · `integracion/02`, `06` |
+| CA-02 | `Catalogo.razor` (envío) · `Pages/Solicitudes/Solicitudes.razor` · `DetalleSolicitud.razor` (cancelar) | #23, #24 | P-12 · `integracion/03` |
+| CA-03 | `Pages/Tecnico/Bandeja.razor` (panel lateral: aprobar, rechazar) · `DetalleSolicitud.razor` | #25 | P-12 · `integracion/04` |
+| CA-04 | `Bandeja.razor` (panel lateral: entregar, no recogida) · `DetalleSolicitud.razor` | #25 | P-12 · `integracion/05`, `06` |
+| CA-05 | `Bandeja.razor` (panel lateral: devolución por recurso) · `DetalleSolicitud.razor` (prórroga, historial) · `Pages/Tecnico/Prorrogas.razor` | #24, #25 | P-12 · `integracion/07`, `08` |
+| CA-06 | `Pages/Coordinacion/Panel.razor` (`/coordinacion`) | #25 | P-12 · `integracion/09` |
 
-Componentes comunes: `Services/ApiCliente.cs` (comunicación con la API y errores ProblemDetails), `Services/SesionUsuario.cs` (token JWT y rol), `Components/Protegida.razor` (acceso por rol en la interfaz).
+Base del frontend (PR #21, #22, #29): `Services/ApiCliente.cs` (comunicación con la API y errores ProblemDetails), `Services/SesionUsuario.cs` (token JWT y rol), `Components/Protegida.razor` (acceso por rol en la interfaz), `Pages/Auth` (login y registro), `Pages/NotFound.razor`, `Pages/Error.razor` y `Services/RegistroErrores.cs` (manejo de errores).
 
 ## Requisitos transversales
 

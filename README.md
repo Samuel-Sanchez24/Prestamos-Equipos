@@ -302,6 +302,18 @@ Flujo de trabajo: ramas `feature/*` y `docs/*` → PR hacia `develop` → `main`
 | #15 | `feature/gestion-tecnico` | Aprobación, entrega, no recogida y devolución (CA-03 a CA-05) |
 | #16 | `feature/prorrogas` | Prórrogas (RF-14, RF-15) |
 | #17 | `feature/consolidado` | Consolidado de Coordinación (CA-06) |
+| #18, #19 | `docs/cierre` | Pruebas P-01 a P-11, trazabilidad, README y CONTRIBUTING del backend |
+| #20 | `develop` → `main` | Release v1.0: backend completo |
+| #21 | `feature/web-base` | Frontend base: cliente HTTP, sesión, componentes y menú por rol |
+| #22 | `feature/web-autenticacion` | Inicio de sesión y registro |
+| #23 | `feature/web-catalogo` | Sistema de diseño y catálogo con disponibilidad y solicitud (CA-01, CA-02) |
+| #24 | `feature/web-solicitudes` | Listado y detalle de solicitudes: cancelar, prórroga, historial (CA-02, CA-05) |
+| #25 | `feature/web-operacion` | Bandeja del técnico, prórrogas y panel de Coordinación (CA-03 a CA-06) |
+| #26 | `feature/web-admin` | Administración de usuarios, recursos y categorías |
+| #27 | `docs/integracion` | Evidencias de la P-12 y documentación del frontend |
+| #28 | `develop` → `main` | Release v2.0: aplicación completa |
+| #29 | `feature/web-errores` | Páginas de error y 404, registro de errores |
+| #30 | `develop` → `main` | Release v2.1: manejo de errores |
 
 Historial completo: [Pull requests](https://github.com/Samuel-Sanchez24/Prestamos-Equipos/pulls?q=is%3Apr) · [Commits](https://github.com/Samuel-Sanchez24/Prestamos-Equipos/commits/develop).
 
