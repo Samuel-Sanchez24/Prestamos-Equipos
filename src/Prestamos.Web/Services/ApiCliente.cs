@@ -87,7 +87,7 @@ public class ApiCliente
             var problema = new Problema { Titulo = "Tiempo de espera agotado", Detalle = "La API tardó demasiado en responder." };
             _registro.Registrar("Conexión", 0, problema.Titulo, problema.Detalle, $"{metodo} {url}");
             return Resultado<T>.Fallo(0, problema);
-        }
+        } 
     }
 
     private static async Task<Problema> LeerProblemaAsync(HttpResponseMessage respuesta)
