@@ -2,6 +2,7 @@
 @inject ApiCliente Api
 @inject SesionUsuario Sesion
 @inject ISnackbar Snackbar
+@inject NavigationManager Nav
 
 <PageTitle>Solicitud #@Id · Préstamos ITM</PageTitle>
 
@@ -281,6 +282,11 @@
     private async Task CargarAsync()
     {
         var r = await Api.GetAsync<SolicitudResponse>($"api/solicitudes/{Id}");
+        if (r.Codigo == 404)
+        {
+            Nav.NavigateTo("not-found", replace: true);
+            return;
+        }
         if (!r.Exito)
         {
             _error = r.Problema;

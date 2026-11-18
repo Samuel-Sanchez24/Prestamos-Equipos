@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Win32;
 
 namespace Prestamos.Web.Services;
 
@@ -17,13 +18,15 @@ public class ApiCliente
     private readonly HttpClient _http;
     private readonly SesionUsuario _sesion;
     private readonly NavigationManager _nav;
+    private readonly RegistroErrores _registro;
 
-    public ApiCliente(HttpClient http, SesionUsuario sesion, NavigationManager nav)
+    public ApiCliente(HttpClient http, SesionUsuario sesion, NavigationManager nav, RegistroErrores registro)
     {
         _http = http;
         _sesion = sesion;
         _nav = nav;
-    }
+        _registro = registro;
+    } 
 
     public Task<Resultado<T>> GetAsync<T>(string url) => EnviarAsync<T>(HttpMethod.Get, url, null);
     public Task<Resultado<T>> PostAsync<T>(string url, object? cuerpo = null) => EnviarAsync<T>(HttpMethod.Post, url, cuerpo);
@@ -51,6 +54,14 @@ public class ApiCliente
             }
 
             var problema = await LeerProblemaAsync(respuesta);
+            _registro.Registrar("API", codigo, problema.Titulo, problema.Mensaje, $"{metodo} {url}");
+
+            // Error interno del servidor: se lleva a la página de error
+            if (codigo >= 500)
+            {
+                _nav.NavigateTo($"error?codigo={codigo}");
+                return Resultado<T>.Fallo(codigo, problema);
+            }
 
             // Sesión vencida o inválida: se cierra y se envía al login
             if (respuesta.StatusCode == HttpStatusCode.Unauthorized && _sesion.Token is not null && !url.Contains("auth/login"))
@@ -63,15 +74,19 @@ public class ApiCliente
         }
         catch (HttpRequestException)
         {
-            return Resultado<T>.Fallo(0, new Problema
+            var problema = new Problema
             {
                 Titulo = "Sin conexión con la API",
                 Detalle = "No se pudo conectar con el servidor. Verifica que la API esté en ejecución (https://localhost:7011)."
-            });
+            };
+            _registro.Registrar("Conexión", 0, problema.Titulo, problema.Detalle, $"{metodo} {url}");
+            return Resultado<T>.Fallo(0, problema);
         }
         catch (TaskCanceledException)
         {
-            return Resultado<T>.Fallo(0, new Problema { Titulo = "Tiempo de espera agotado", Detalle = "La API tardó demasiado en responder." });
+            var problema = new Problema { Titulo = "Tiempo de espera agotado", Detalle = "La API tardó demasiado en responder." };
+            _registro.Registrar("Conexión", 0, problema.Titulo, problema.Detalle, $"{metodo} {url}");
+            return Resultado<T>.Fallo(0, problema);
         }
     }
 
